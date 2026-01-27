@@ -44,15 +44,16 @@ Antes de ejecutar cualquier script, asegúrate de cumplir con:
     sudo ./audit/sys-audit-check.sh
     ```
 
-**🤝 Guía de Contribución**
+## 🤝 Guía de Contribución
 Para mantener la calidad de **K'aatech**, todas las contribuciones deben:
 
 1. Pasar el linter de ShellCheck.
 2. Seguir el estilo de codificación definido en la [Guía de Estilo](docs/style-guide.md).
 3. Usar Conventional Commits para los mensajes de Git.
 
-**🛡 Disclaimer**
+## 🛡 Disclaimer
 
-Este software se proporciona "tal cual". Consulta el archivo `LICENSE` para más detalles.  \
+Este software se proporciona "tal cual" bajo la Licencia **MIT**. Consulta el archivo [LICENSE](/LICENSE) para más detalles.  \
 Para soporte profesional, visita [kaatech.mx](https://kaatech.mx).
+
 
