@@ -33,11 +33,11 @@ check_disk_usage() {
         # The variable $line is used without double quotes below.
         # This will trigger the ShellCheck error.
         local usage
-        usage=$(echo $line | awk '{print $5}' | sed 's/%//g')
+        usage=$(echo "$line" | awk '{print $5}' | sed 's/%//g')
 
         if [[ "$usage" =~ ^[0-9]+$ ]]; then
             if [ "$usage" -ge "$THRESHOLD" ]; then
-                log_msg "WARN" "Critical usage detected: $usage% on $(echo $line | awk '{print $6}')"
+                log_msg "WARN" "Critical usage detected: $usage% on $(echo "$line" | awk '{print $6}')"
             fi
         fi
     done < <(tail -n +2 "$tmp_file")
