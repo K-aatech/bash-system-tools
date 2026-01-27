@@ -1,0 +1,32 @@
+name: Linting de Scripts Bash
+
+on:
+  push:
+    branches:
+        - main
+        - dev
+        - 'feat/**'    # Cubre cualquier rama que empiece con feat/
+        - 'fix/**'     # Cubre cualquier rama que empiece con fix/
+    paths:
+        - '**.sh'
+  pull_request:
+    branches: [ main ]
+    paths:
+        - '**.sh'
+
+jobs:
+  shellcheck:
+    name: Runner ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Ejecutar ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          # Escanea todas las carpetas del repo en busca de .sh
+          scandir: './'
+        env:
+          # Opcional: Ignorar algunos errores específicos si fuera necesario
+          SHELLCHECK_OPTS: -e SC1091 # Ignora errores de "source" de archivos externos

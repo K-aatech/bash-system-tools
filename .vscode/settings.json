@@ -1,0 +1,11 @@
+{
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "editor.renderWhitespace": "all",
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    "shellcheck.executablePath": "shellcheck",
+    "[markdown]": {
+        "editor.wordWrap": "on"
+    }
+}
