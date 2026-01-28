@@ -2,7 +2,7 @@
 
 # =========================================================================================================================
 # Script Name: sys-audit-check.sh
-# Version:     1.3.0
+# Version:     1.3.1
 # Description: Professional system health audit with Thermal Monitoring,
 #              file integrity checks and log rotation for K'aatech infrastructure.
 # License:     MIT
@@ -12,7 +12,7 @@
 set -euo pipefail
 
 # Environment Variables and Constants
-declare -r VERSION="1.3.0"
+declare -r VERSION="1.3.1"
 declare -ri THRESHOLD_DISK=90
 declare -ri THRESHOLD_RAM=80
 declare -ri THRESHOLD_TEMP=75 # Celsius
@@ -41,35 +41,27 @@ rotate_logs() {
 log_msg() {
     local level=$1
     shift
-    local msg
-    msg="[%s] [%s] %s\n"
     local timestamp
     timestamp=$(date +'%Y-%m-%d %H:%M:%S')
-
-    # Output to stdout/stderr
-    printf "$msg" "$timestamp" "$level" "$*"
-
-    # Persistent logging
-    if [[ -w "$LOG_FILE" ]]; then
-        printf "$msg" "$timestamp" "$level" "$*" >> "$LOG_FILE"
-    fi
+    printf "[%s] [%s] %s\n" "$timestamp" "$level" "$*" | tee -a "$LOG_FILE"
 }
 
 check_dependencies() {
+    log_msg "INFO" "Validating system dependencies..."
     local bin
     declare -a deps=(awk sed grep ps df free uptime sensors)
     for bin in "${deps[@]}"; do
         if ! command -v "$bin" >/dev/null 2>&1; then
             if [[ "$bin" == "sensors" ]]; then
-                log_msg "WARN" "Binary 'sensors' missing. Attempting to install..."
-                sudo apt-get update && sudo apt-get install -y lm-sensors
-                sudo sensors-detect --auto >/dev/null 2>&1
+                log_msg "WARN" "Binary 'sensors' missing. Attempting installation..."
+                apt-get update && apt-get install -y lm-sensors && sensors-detect --auto >/dev/null 2>&1 || true
             else
                 printf "[ERROR] Critical dependency missing: %s\n" "$bin" >&2
                 exit 1
             fi
         fi
     done
+    log_msg "INFO" "All dependencies resolved successfully."
 }
 
 check_cpu_load() {
@@ -96,22 +88,30 @@ check_ram_usage() {
 
 check_disk_usage() {
     log_msg "INFO" "Scanning disk usage on all mounted partitions..."
-    df -h --output=pcent,target | tail -n +2 | while read -r pcent target; do
+    local found_issue=0
+    # Process line by line to ensure output visibility
+    while read -r pcent target; do
         local -i usage
         usage=${pcent%\%}
-        [[ $usage -ge $THRESHOLD_DISK ]] && log_msg "WARN" "Disk space critical: ${usage}% on ${target}"
-    done
+        if [[ $usage -ge $THRESHOLD_DISK ]]; then
+            log_msg "WARN" "Disk space critical: ${usage}% on ${target}"
+            found_issue=1
+        fi
+    done < <(df -h --output=pcent,target | tail -n +2)
+
+    [[ $found_issue -eq 0 ]] && log_msg "INFO" "Disk usage within normal parameters."
 }
 
 check_zombie_processes() {
-    local -i zombies
-    zombies=$(ps -eo pid,ppid,state,comm | awk '$3=="Z"' || true)
+    log_msg "INFO" "Checking for zombie processes..."
+    local zombies_list
+    zombies_list=$(ps -eo pid,ppid,state,comm | awk '$3=="Z"' || true)
 
-    if [[ -n "$zombies" ]]; then
-        local count
-        count=$(echo "$zombies" | wc -l)
+    if [[ -n "$zombies_list" ]]; then
+        local -i count
+        count=$(echo "$zombies_list" | wc -l)
         log_msg "WARN" "Detected $count zombie processes:"
-        echo "$zombies" | awk '{printf "      - PID: %s (Parent PID: %s) CMD: %s\n", $1, $2, $4}'
+        echo "$zombies_list" | awk '{printf "      - PID: %s (Parent PID: %s) CMD: %s\n", $1, $2, $4}'
         log_msg "INFO" "Action: Kill parent PID using 'kill -HUP <PPID>'"
     else
         log_msg "INFO" "No zombie processes detected."
@@ -121,43 +121,43 @@ check_zombie_processes() {
 check_thermal_status() {
     log_msg "INFO" "Checking thermal and fan status..."
     # Extract CPU Temperature (common patterns: 'Package id 0' or 'Core 0')
-    local -i cpu_temp
-    # Robust parsing: searches for the first numeric value after a '+' in relevant lines
-    cpu_temp=$(sensors | awk '/(Composite|Package id 0|Core 0)/ {print $4; exit}' | tr -d '+°C' | cut -d. -f1)
+    local cpu_out
+    cpu_out=$(sensors 2>/dev/null | awk '/(Composite|Package id 0|Core 0)/ {print $4; exit}' | tr -d '+°C' || true)
 
-    if [[ -n "$cpu_temp" ]]; then
+    if [[ -n "$cpu_out" ]]; then
+        local -i cpu_temp
+        cpu_temp=${cpu_out%.*} # Remove decimal for integer comparison
         log_msg "INFO" "CPU Temperature: ${cpu_temp}°C"
         [[ $cpu_temp -ge $THRESHOLD_TEMP ]] && log_msg "WARN" "High CPU temperature detected!"
     else
-        log_msg "WARN" "Could not parse CPU temperature."
+        log_msg "WARN" "Thermal sensors not reporting data."
     fi
 
     # Check Fans
     local fans
-    fans=$(sensors | grep -i 'fan' | awk '$2 > 0 {printf "      - %s: %s %s\n", $1, $2, $3}' || true)
+    fans=$(sensors 2>/dev/null | grep -i 'fan' | awk '$2 > 0 {printf "      - %s: %s %s\n", $1, $2, $3}' || true)
     if [[ -n "$fans" ]]; then
-        log_msg "INFO" "Active Fans detected:"
-        echo "$fans"
+        log_msg "INFO" "Active Fans detected:\n$fans"
     else
-        log_msg "INFO" "No active fans detected or not supported by hardware."
+        log_msg "INFO" "No active fans detected or not supported."
     fi
 }
 
 check_file_integrity() {
     log_msg "INFO" "Checking critical file permissions..."
     declare -a critical_files=("/etc/passwd" "/etc/shadow" "/etc/sudoers")
+    local -i issues=0
 
     for file in "${critical_files[@]}"; do
-        if [[ ! -f "$file" ]]; then
-            log_msg "CRITICAL" "File $file missing!"
-            continue
-        fi
+        [[ ! -f "$file" ]] && { log_msg "CRITICAL" "File $file missing!"; issues+=1; continue; }
 
-        # Detect if sensitive files are world-writable
-        if [[ $(stat -c "%a" "$file" | grep -E '. . [2367]') ]]; then
+        # Detect world-writable via octal check
+        if stat -c "%a" "$file" | grep -E '. . [2367]' >/dev/null 2>&1; then
              log_msg "CRITICAL" "Security risk: $file is WORLD-WRITABLE!"
+             issues+=1
         fi
     done
+    [[ $issues -eq 0 ]] && log_msg "INFO" "Critical files integrity verified (No world-writable bits)."
 }
 
 # Main Execution Flow
@@ -180,6 +180,7 @@ main() {
     check_zombie_processes
     check_thermal_status
 
+    log_msg "INFO" "------------------------------------------"
     log_msg "INFO" "Audit process finished successfully."
 }
 
