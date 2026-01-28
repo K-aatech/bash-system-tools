@@ -101,9 +101,8 @@ check_cpu_performance() {
 check_network_security() {
     log_msg "INFO" "Auditing open network ports (Listening)..."
     local open_ports
-    # We use $1 for the protocol and $5 for Local Address:Port
-    # Using 'column -t' ensures the output is readable even with different IP lengths
-    open_ports=$(ss -tuln | awk 'NR>1 {printf "%s %s\n", $1, $5}' | column -t | sed 's/^/      - /' || true)
+    # We use awk's printf to align: %-10s (protocol) and %-20s (address)
+    open_ports=$(ss -tuln | awk 'NR>1 {printf "      - %-5s %s\n", $1, $5}' || true)
 
     if [[ -n "$open_ports" ]]; then
         echo "$open_ports"
