@@ -2,7 +2,7 @@
 
 # =========================================================================================================================
 # Script Name: sys-audit-check.sh
-# Version:     1.4.2
+# Version:     1.4.3
 # Description: Professional system health audit with Thermal Monitoring,
 #              file integrity checks, network audit and log rotation for K'aatech infrastructure.
 # License:     MIT
@@ -12,7 +12,7 @@
 set -euo pipefail
 
 # Environment Variables and Constants
-declare -r VERSION="1.4.2"
+declare -r VERSION="1.4.3"
 declare -ri THRESHOLD_DISK=90
 declare -ri THRESHOLD_RAM=80
 declare -ri THRESHOLD_TEMP=75 # Celsius
@@ -94,10 +94,6 @@ check_cpu_performance() {
         log_msg "WARN" "High I/O Wait detected! Disk latency is impacting CPU."
     fi
 
-    if (( $(echo "$iowait > $THRESHOLD_IOWAIT" | bc -l) )); then
-        log_msg "WARN" "High I/O Wait detected! Disk bottleneck suspected."
-    fi
-
     log_msg "INFO" "Top 3 CPU consuming processes:"
     ps -eo pcpu,comm --sort=-pcpu | awk 'NR>1 && NR<=4 {printf "      - %s: %s%%\n", $2, $1}'
 }
@@ -105,7 +101,9 @@ check_cpu_performance() {
 check_network_security() {
     log_msg "INFO" "Auditing open network ports (Listening)..."
     local open_ports
-    open_ports=$(ss -tuln | awk 'NR>1 {printf "      - %s %s\n", $1, $4}' || true)
+    # We use $1 for the protocol and $5 for Local Address:Port
+    # Using 'column -t' ensures the output is readable even with different IP lengths
+    open_ports=$(ss -tuln | awk 'NR>1 {printf "%s %s\n", $1, $5}' | column -t | sed 's/^/      - /' || true)
 
     if [[ -n "$open_ports" ]]; then
         echo "$open_ports"
