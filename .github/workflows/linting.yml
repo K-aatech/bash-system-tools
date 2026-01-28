@@ -1,5 +1,8 @@
 name: Linting de Scripts Bash
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
