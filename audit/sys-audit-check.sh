@@ -2,7 +2,7 @@
 
 # =========================================================================================================================
 # Script Name: sys-audit-check.sh
-# Version:     1.4.1
+# Version:     1.4.2
 # Description: Professional system health audit with Thermal Monitoring,
 #              file integrity checks, network audit and log rotation for K'aatech infrastructure.
 # License:     MIT
@@ -12,7 +12,7 @@
 set -euo pipefail
 
 # Environment Variables and Constants
-declare -r VERSION="1.4.1"
+declare -r VERSION="1.4.2"
 declare -ri THRESHOLD_DISK=90
 declare -ri THRESHOLD_RAM=80
 declare -ri THRESHOLD_TEMP=75 # Celsius
@@ -157,7 +157,7 @@ check_zombie_processes() {
         while read -r z_pid z_ppid z_state z_cmd; do
             local p_name
             p_name=$(ps -p "$z_ppid" -o comm= || echo "unknown")
-            log_msg "WARN" "      - Zombie PID: $z_pid | Parent: $p_name (PPID: $z_ppid) | CMD: $z_cmd"
+            log_msg "WARN" "      - Zombie PID: $z_pid | Parent: $p_name (PPID: $z_ppid) | CMD: $z_cmd [State: $z_state]"
         done <<< "$zombies_list"
 
         log_msg "INFO" "Action: Send SIGCHLD or SIGHUP to the parent process."
