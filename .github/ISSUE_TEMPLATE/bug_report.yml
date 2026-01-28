@@ -1,0 +1,43 @@
+name: "🐞 Reporte de Error"
+description: Informa un problema técnico en los scripts.
+title: "[BUG]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por reportar un error. Por favor, completa la información técnica para ayudarnos a resolverlo.
+  - type: input
+    id: script_path
+    attributes:
+      label: Script afectado
+      placeholder: "ej: audit/sys-audit-check.sh"
+    validations:
+      required: true
+  - type: dropdown
+    id: os_type
+    attributes:
+      label: Sistema Operativo
+      options:
+        - Ubuntu 22.04 / 24.04
+        - Debian 11 / 12
+        - CentOS / RHEL / AlmaLinux
+        - Otro
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Pasos para reproducir
+      description: ¿Qué comandos ejecutaste?
+      placeholder: |
+        1. cd audit/
+        2. sudo ./sys-audit-check.sh
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs o Mensajes de Error
+      description: Copia y pega la salida de la terminal aquí.
+      render: shell

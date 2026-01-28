@@ -1,0 +1,17 @@
+name: "🚀 Sugerencia de Script o Mejora"
+description: Propón una idea para un nuevo script de automatización.
+title: "[PROPUESTA]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: feature_description
+    attributes:
+      label: ¿Qué debería hacer el nuevo script?
+      description: Describe la necesidad técnica o el problema que quieres automatizar.
+    validations:
+      required: true
+  - type: textarea
+    id: value_proposition
+    attributes:
+      label: Valor para K-aatech
+      description: ¿Cómo ayuda esto a la administración de servidores o servicios?
