@@ -1,0 +1,44 @@
+# Engineering Manual: [nombre-del-script].sh
+
+## 1. Overview
+[Descripción breve y clara de qué hace el script, qué problema resuelve y por qué es necesario en la infraestructura de K'aatech.]
+
+## 2. Technical Details
+- **Logic:** [Explicación de la lógica principal: ej. si es idempotente, si usa bucles, si es de solo lectura, etc.]
+- **Thresholds / Config:**
+  - [Parámetro 1]: [Valor/Límite] - [Razón técnica]
+  - [Parámetro 2]: [Valor/Límite] - [Razón técnica]
+
+## 3. Dependencies
+[Lista de paquetes o comandos necesarios para que el script funcione correctamente.]
+- `bash` (v4.0+)
+- `[herramienta-1]`
+- `[herramienta-2]`
+
+## 4. Installation & Usage
+[Instrucciones paso a paso para desplegar y ejecutar el script.]
+```bash
+# Otorgar permisos
+chmod +x [ruta/al/script].sh
+
+# Ejecución estándar
+./[ruta/al/script].sh [argumentos-opcionales]
+```
+
+## 5. Troubleshooting
+[Lista de errores comunes y cómo solucionarlos.]
+
+* **Error "[mensaje]":** [Solución o causa probable].
+* **Síntoma "[comportamiento]":** [Acción correctiva].
+
+## 6. Disaster Recovery (Action Plan)
+[Qué pasos debe seguir el ingeniero si el script reporta un fallo crítico o si el propio script causa un problema.]
+
+1. **[Escenario 1]:** [Acción inmediata].
+2. **[Escenario 2]:** [Acción inmediata].
+
+## 7. Cleanup / Uninstallation
+[Descripción de los rastros que deja el script y cómo eliminarlos.]
+
+* **Archivos temporales:** [Rutas y cómo borrarlos].
+* **Configuraciones:** [Cómo revertir los cambios realizados].

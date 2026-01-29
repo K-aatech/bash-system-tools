@@ -1,6 +1,7 @@
 # Bash System Tools (BST) | K'aatech
 
 ![Linting Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg)
+[![Documentation](https://img.shields.io/badge/docs-Engineering%20Manuals-orange)](./docs/sys-audit-check.md)
 
 Conjunto de herramientas de automatización y auditoría para la gestión profesional de infraestructuras Linux. Estas herramientas están diseñadas siguiendo principios de seguridad, idempotencia y trazabilidad.
 
@@ -28,7 +29,7 @@ Antes de ejecutar cualquier script, asegúrate de cumplir con:
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone [https://github.com/K-aatech/bash-system-tools.git](https://github.com/K-aatech/bash-system-tools.git)
+   git clone https://github.com/K-aatech/bash-system-tools.git
    cd bash-system-tools
    ```
 
@@ -56,4 +57,10 @@ Para mantener la calidad de **K'aatech**, todas las contribuciones deben:
 Este software se proporciona "tal cual" bajo la Licencia **MIT**. Consulta el archivo [LICENSE](/LICENSE) para más detalles.  \
 Para soporte profesional, visita [kaatech.mx](https://kaatech.mx).
 
+## 🛠 Catalog of Tools
+
+### 1. System Audit Check (`audit/sys-audit-check.sh`)
+Professional diagnostic tool for Linux health.
+> [!TIP]
+> View the [Full Engineering Manual here](./docs/sys-audit-check.md) for detailed metrics and thresholds.
 
