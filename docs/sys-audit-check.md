@@ -2,7 +2,7 @@
 
 ![Versión](https://img.shields.io/github/v/tag/K-aatech/bash-system-tools?label=version&color=blue)
 ![Linting Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
 ![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
 
 ## 1. Descripción General
@@ -37,17 +37,22 @@ El script es minimalista y utiliza herramientas estándar de POSIX:
 ## 4. Instalación y Uso
 El script requiere privilegios de **root** para rotación de *logs*, verificación de `/etc/shadow` e instalación de dependencias.
 
-```bash
-# Instalación recomendada en ruta de sistema
-sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/main/audit/sys-audit-check.sh
+### Instalación en el Sistema (Standalone)
+Para desplegar el monitor como una herramienta global del sistema:
 
-# Configuración de seguridad (Solo root puede leer/escribir/ejecutar)
+```bash
+# 1. Descargar la versión estable v1.4.3
+sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/v1.4.3/audit/sys-audit-check.sh
+
+# 2. Asegurar propiedad y permisos restringidos (Solo Root)
 sudo chown root:root /usr/local/bin/sys-audit-check.sh
 sudo chmod 700 /usr/local/bin/sys-audit-check.sh
 
-# Ejecución manual
-sudo /usr/local/bin/sys-audit-check.sh
+# 3. Ejecución
+sudo sys-audit-check.sh
 ```
+
+>[!NOTE] Al instalarlo en `/usr/local/bin`, puedes ejecutarlo simplemente llamando a `sys-audit-check.sh` desde cualquier ubicación si dicha ruta está en tu `$PATH`.
 
 ## 5. Resolución de Problemas (Troubleshooting)
 * **"Thermal sensors not reporting data":** Verifique si está en una VM o si necesita ejecutar `sudo sensors-detect`.
