@@ -1,9 +1,45 @@
 # Bash System Tools (BST) | K'aatech
 
+![Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?label=version&color=blue)
 ![Linting Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg)
-[![Documentation](https://img.shields.io/badge/docs-Engineering%20Manuals-orange)](./docs/sys-audit-check.md)
+![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
+[![Documentation](https://img.shields.io/badge/docs-Engineering%20Manuals-lightgrey)](./docs/sys-audit-check.md)
 
 Conjunto de herramientas de automatización y auditoría para la gestión profesional de infraestructuras Linux. Estas herramientas están diseñadas siguiendo principios de seguridad, idempotencia y trazabilidad.
+
+---
+
+## 🚀 Instalación y Uso
+
+### Opción A: Suite Completa (Recomendado)
+Ideal para administradores que usarán múltiples herramientas de la colección.
+```bash
+git clone https://github.com/K-aatech/bash-system-tools.git
+cd bash-system-tools
+sudo chmod +x audit/*.sh
+sudo ./audit/sys-audit-check.sh
+```
+
+### Opción B: Script individual
+Ideal para auditorías rápidas en un solo servidor.
+```bash
+# Descarga la versión estable v1.4.3
+sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/v1.4.3/audit/sys-audit-check.sh
+sudo chmod 700 /usr/local/bin/sys-audit-check.sh
+```
+
+---
+
+## 🛠 Catálogo de Herramientas
+
+| Herramienta | Categoría | Descripción | Documentación |
+| :--- | :--- | :--- | :--- |
+| [**`sys-audit-check.sh`**](./audit/sys-audit-check.sh) | `Audit` | Diagnóstico profesional de salud Linux. | [Manual de Ingeniería 📘](./docs/sys-audit-check.md) |  \
+
+<br>
+
+> [!TIP]
+> Cada herramienta incluye un sistema de rotación de logs automático en `/var/log/kaatech_audit.log` y validación de privilegios de *root*.
 
 ---
 
@@ -25,26 +61,6 @@ Antes de ejecutar cualquier script, asegúrate de cumplir con:
 
 ---
 
-## 🚀 Uso Seguro
-
-1. **Clonar el repositorio:**
-   ```bash
-   git clone https://github.com/K-aatech/bash-system-tools.git
-   cd bash-system-tools
-   ```
-
-2. **Dar permisos de ejecución:**
-
-    ```bash
-    chmod +x ./audit/sys-audit-check.sh
-    ```
-
-3. **Ejecución (Modo Seguro):** Recomendamos probar primero en entornos de staging.
-
-    ```bash
-    sudo ./audit/sys-audit-check.sh
-    ```
-
 ## 🤝 Guía de Contribución
 Para mantener la calidad de **K'aatech**, todas las contribuciones deben:
 
@@ -56,11 +72,3 @@ Para mantener la calidad de **K'aatech**, todas las contribuciones deben:
 
 Este software se proporciona "tal cual" bajo la Licencia **MIT**. Consulta el archivo [LICENSE](/LICENSE) para más detalles.  \
 Para soporte profesional, visita [kaatech.mx](https://kaatech.mx).
-
-## 🛠 Catalog of Tools
-
-### 1. System Audit Check (`audit/sys-audit-check.sh`)
-Professional diagnostic tool for Linux health.
-> [!TIP]
-> View the [Full Engineering Manual here](./docs/sys-audit-check.md) for detailed metrics and thresholds.
-
