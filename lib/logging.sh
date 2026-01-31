@@ -2,17 +2,26 @@
 # =========================================================================================================================
 # Script Name: logging.sh
 # Version:     1.5.0
-# Description: Core Logging Library for K'aatech Bash System Tools.
+# Description: K'aatech Bash System Tools - Core Logging Library v1.5.0
 # License:     MIT
 # =========================================================================================================================
 set -euo pipefail
-# Colores ANSI
-readonly CLR_RESET='\033[0m'
-readonly CLR_BLUE='\033[34m'
-readonly CLR_YELLOW='\033[33m'
-readonly CLR_RED='\033[31m'
-readonly CLR_GREEN='\033[32m'
-# Configuración de Log
+# --- Smart Color Detection ---
+# Only use ANSI colors if output is a terminal
+if [[ -t 1 || -t 2 ]]; then
+    readonly CLR_RESET='\033[0m'
+    readonly CLR_BLUE='\033[34m'
+    readonly CLR_YELLOW='\033[33m'
+    readonly CLR_RED='\033[31m'
+    readonly CLR_GREEN='\033[32m'
+else
+    readonly CLR_RESET=''
+    readonly CLR_BLUE=''
+    readonly CLR_YELLOW=''
+    readonly CLR_RED=''
+    readonly CLR_GREEN=''
+fi
+# Log file path with default
 : "${LOG_FILE:=/var/log/kaatech_audit.log}"
 export LOG_FILE
 
