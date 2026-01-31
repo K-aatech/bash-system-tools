@@ -52,7 +52,7 @@ sudo chmod 700 /usr/local/bin/sys-audit-check.sh
 sudo sys-audit-check.sh
 ```
 
->[!NOTE] Al instalarlo en `/usr/local/bin`, puedes ejecutarlo simplemente llamando a `sys-audit-check.sh` desde cualquier ubicación si dicha ruta está en tu `$PATH`.
+> [!NOTE] Al instalarlo en `/usr/local/bin`, puedes ejecutarlo simplemente llamando a `sys-audit-check.sh` desde cualquier ubicación si dicha ruta está en tu `$PATH`.
 
 ## 5. Resolución de Problemas (Troubleshooting)
 * **"Thermal sensors not reporting data":** Verifique si está en una VM o si necesita ejecutar `sudo sensors-detect`.

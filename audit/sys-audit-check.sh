@@ -11,7 +11,7 @@
 set -euo pipefail
 
 # Environment Variables and Constants
-declare -r VERSION="1.4.3"
+declare -r VERSION="1.5.0"
 declare -ri THRESHOLD_DISK=90
 declare -ri THRESHOLD_RAM=80
 declare -ri THRESHOLD_TEMP=75 # Celsius

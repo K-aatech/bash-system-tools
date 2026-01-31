@@ -13,7 +13,8 @@ readonly CLR_YELLOW='\033[33m'
 readonly CLR_RED='\033[31m'
 readonly CLR_GREEN='\033[32m'
 # Configuración de Log
-readonly LOG_FILE="/var/log/kaatech_audit.log"
+: "${LOG_FILE:=/var/log/kaatech_audit.log}"
+export LOG_FILE
 
 log_event() {
     local level="$1"

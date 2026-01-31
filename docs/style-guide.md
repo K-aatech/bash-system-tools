@@ -10,6 +10,9 @@ Este documento define los estándares de codificación para todos los scripts de
   - Variables globales: `UPPER_CASE` (ej. `BACKUP_DIR`).
   - Variables locales y funciones: `snake_case` (ej. `local check_status`).
 
+    > [!NOTE]
+    > Utilice: "${VAR:=val}" para variables globales en bibliotecas para evitar colisiones de solo lectura durante el abastecimiento.
+
 ## 2. Pilares de Infraestructura (Obligatorios)
 
 ### A. Idempotencia
