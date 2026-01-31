@@ -41,8 +41,8 @@ El script requiere privilegios de **root** para rotación de *logs*, verificaci�
 Para desplegar el monitor como una herramienta global del sistema:
 
 ```bash
-# 1. Descargar la versión estable v1.4.3
-sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/v1.4.3/audit/sys-audit-check.sh
+# 1. Descargar la versión estable v1.5.0
+sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/v1.5.0/audit/sys-audit-check.sh
 
 # 2. Asegurar propiedad y permisos restringidos (Solo Root)
 sudo chown root:root /usr/local/bin/sys-audit-check.sh
@@ -52,7 +52,7 @@ sudo chmod 700 /usr/local/bin/sys-audit-check.sh
 sudo sys-audit-check.sh
 ```
 
->[!NOTE] Al instalarlo en `/usr/local/bin`, puedes ejecutarlo simplemente llamando a `sys-audit-check.sh` desde cualquier ubicación si dicha ruta está en tu `$PATH`.
+> [!NOTE] Al instalarlo en `/usr/local/bin`, puedes ejecutarlo simplemente llamando a `sys-audit-check.sh` desde cualquier ubicación si dicha ruta está en tu `$PATH`.
 
 ## 5. Resolución de Problemas (Troubleshooting)
 * **"Thermal sensors not reporting data":** Verifique si está en una VM o si necesita ejecutar `sudo sensors-detect`.
@@ -78,3 +78,15 @@ Si el *script* reporta niveles críticos:
 |[INFO]|Operación normal o chequeo exitoso.|Ninguna.|
 |[WARN]|Umbral superado (RAM, Disco, Temp) o procesos Zombie.|Revisar carga del sistema o limpiar huérfanos.|
 |[CRITICAL]|Riesgo de seguridad (World-writable files) o falta de archivos.|Intervención inmediata. Corregir permisos de archivos críticos.|
+
+
+### 7.1 Gestión Avanzada de Salidas
+El *script* separa los flujos de información siguiendo el estándar POSIX:
+- **Stdout (Nivel INFO/OK):** Información general y progreso.
+- **Stderr (Nivel WARN/CRIT):** Alertas y errores críticos.
+
+Para capturar únicamente las alertas en un archivo independiente durante una auditoría automatizada, ejecute:
+```bash
+sudo ./audit/sys-audit-check.sh 2> alertas_criticas.log
+```
+

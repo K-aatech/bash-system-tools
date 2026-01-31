@@ -10,6 +10,9 @@ Este documento define los estándares de codificación para todos los scripts de
   - Variables globales: `UPPER_CASE` (ej. `BACKUP_DIR`).
   - Variables locales y funciones: `snake_case` (ej. `local check_status`).
 
+    > [!NOTE]
+    > Utilice: "${VAR:=val}" para variables globales en bibliotecas para evitar colisiones de solo lectura durante el abastecimiento.
+
 ## 2. Pilares de Infraestructura (Obligatorios)
 
 ### A. Idempotencia
@@ -18,10 +21,13 @@ El script debe ser seguro de ejecutar múltiples veces.
   - *Mal:* `echo "config" >> /etc/file`
   - *Bien:* `grep -qxF "config" /etc/file || echo "config" >> /etc/file`
 
-### B. Manejo de Errores y Logging
-No se debe usar `echo` para mensajes de estado. Se deben usar funciones de log que incluyan severidad y timestamp.
-- Usar `[INFO]`, `[WARN]`, `[ERROR]`.
-- Los errores deben enviarse a `stderr` (`>&2`).
+### B. Manejo de Errores y *Logging*
+Está prohibido el uso de `echo` directo para mensajes de estado. Se debe invocar la función `log_event` de la librería *core*.
+- **Niveles soportados:** `INFO`, `OK`, `WARN`, `CRIT`.
+- **Flujos de salida:**
+  - `INFO` / `OK` → Enviados a `stdout`.
+  - `WARN` / `CRIT` → Enviados a `stderr` mediante redirección (`>&2`).
+- **Ejemplo de uso:** `log_event "CRIT" "Permisos insuficientes en /etc/shadow"`
 
 ### C. Limpieza (Cleanup)
 Si el script genera archivos temporales, debe usar la instrucción `trap` para asegurar que se borren incluso si el script falla o es interrumpido (`Ctrl+C`).
