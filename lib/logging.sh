@@ -17,8 +17,8 @@ readonly CLR_GREEN='\033[32m'
 export LOG_FILE
 
 log_event() {
-    local level="$1"
-    local msg="$2"
+    local level="${1:-INFO}"
+    local message="${2:-No message provided}"
     local timestamp
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
