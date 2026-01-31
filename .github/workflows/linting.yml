@@ -10,12 +10,8 @@ on:
         - dev
         - 'feat/**'    # Cubre cualquier rama que empiece con feat/
         - 'fix/**'     # Cubre cualquier rama que empiece con fix/
-    paths:
-        - '**.sh'
   pull_request:
     branches: [ main ]
-    paths:
-        - '**.sh'
 
 jobs:
   shellcheck:

@@ -16,17 +16,26 @@ Ideal para administradores que usarán múltiples herramientas de la colección.
 ```bash
 git clone https://github.com/K-aatech/bash-system-tools.git
 cd bash-system-tools
-sudo chmod +x audit/*.sh
+# Dar permisos de ejecución a todos los scripts y asegurar lectura de librerías
+sudo chmod +x */*.sh
 sudo ./audit/sys-audit-check.sh
 ```
 
 ### Opción B: Script individual
 Ideal para auditorías rápidas en un solo servidor.
 ```bash
-# Descarga la versión estable v1.4.3
-sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/v1.4.3/audit/sys-audit-check.sh
+# Descarga la versión estable v1.5.0
+sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/v1.5.0/audit/sys-audit-check.sh
 sudo chmod 700 /usr/local/bin/sys-audit-check.sh
 ```
+
+---
+
+## 🛠 Arquitectura del *Toolkit*
+Este proyecto sigue un diseño modular. Los *scripts* de herramientas (`/audit`, `/hardening`, etc.) dependen de un conjunto de librerías centralizadas en `/lib`.
+
+> [!IMPORTANT]
+> Si decides descargar un *script* de forma individual (*Standalone*), este activará automáticamente un **modo de compatibilidad** (*fallback*) para mantener su funcionalidad, aunque se recomienda la suite completa para obtener *logs* estandarizados y soporte de colores.
 
 ---
 
