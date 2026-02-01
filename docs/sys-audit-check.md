@@ -80,12 +80,20 @@ Si el *script* reporta niveles críticos:
 |[*CRITICAL*]|Riesgo de seguridad (*World-writable files*) o falta de archivos.|Intervención inmediata. Corregir permisos de archivos críticos.|
 
 
-### 7.1 Gestión Avanzada de Salidas
-El *script* separa los flujos de información siguiendo el estándar POSIX:
-- **Stdout (Nivel INFO/OK):** Información general y progreso.
-- **Stderr (Nivel WARN/CRIT):** Alertas y errores críticos.
+### 7.1 Gestión Avanzada de Salidas (*Streams*)
+El *script* separa los flujos de información siguiendo el estándar **POSIX**, lo que permite una integración profesional con sistemas de monitoreo:
 
-Para capturar únicamente las alertas en un archivo independiente durante una auditoría automatizada, ejecute:
+- **Stdout (Canal 1):** Mensajes `[INFO]` y `[ OK ]`.
+- **Stderr (Canal 2):** Mensajes `[WARN]` y `[CRIT]`.
+
+Debido a la arquitectura de la librería de logging, una ejecución puede generar tres fuentes de datos:
+1. **Archivo Maestro:** `$LOG_FILE` (definido en el script). Es persistente y siempre en texto plano.
+2. **Captura de Info:** `./sys-audit-check.sh > info.log`.
+3. **Captura de Alertas:** `./sys-audit-check.sh 2> alertas.log`.
+
+> [!IMPORTANT]
+> **Nota sobre Colores ANSI:** La librería detecta automáticamente si la salida es una terminal para aplicar colores. Si usted redirige **solo uno** de los flujos pero mantiene el otro en pantalla, es posible que los archivos `.log` resultantes contengan códigos de color ANSI. Para una captura totalmente limpia en archivos externos, se recomienda redirigir ambos flujos simultáneamente:
+
 ```bash
-sudo ./audit/sys-audit-check.sh 2> alertas_criticas.log
+sudo ./audit/sys-audit-check.sh > audit_info.log 2> audit_alertas.log
 ```
