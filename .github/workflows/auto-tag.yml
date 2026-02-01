@@ -8,7 +8,7 @@ on:
 
 jobs:
   release:
-    if: github.event.pull_request.merged == true && github.head_ref == 'dev'
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -30,6 +30,8 @@ jobs:
           # Si el mensaje del commit contiene #major, #minor o #patch
           # O si usas labels en el PR (opción recomendada)
           release_branches: main
+          # Si el PR tiene el label 'pre-release', usará este sufijo:
+          pre_release_branches: main:rc"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -38,8 +40,8 @@ jobs:
           name: Release ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ steps.tag_version.outputs.changelog }}
           generate_release_notes: true
-          # Marcamos como pre-release si el tag contiene -rc o -alpha
-          prerelease: ${{ contains(steps.tag_version.outputs.new_tag, '-rc') || contains(steps.tag_version.outputs.new_tag, '-alpha') }}
+          # Marcamos como pre-release si el tag contiene -rc o -beta
+          prerelease: ${{ contains(steps.tag_version.outputs.new_tag, '-rc') || contains(steps.tag_version.outputs.new_tag, '-beta') }}
           files: |
             audit/*.sh
             hardening/*.sh
