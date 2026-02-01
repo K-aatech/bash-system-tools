@@ -1,4 +1,4 @@
-name: Auto Tagging on Merge
+name: Auto Tagging and Release on PR Merge
 
 on:
   pull_request:
@@ -7,11 +7,12 @@ on:
     types: [closed]
 
 jobs:
-  tag:
+  release:
     if: github.event.pull_request.merged == true && github.head_ref == 'dev'
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: read # Necesario para leer los labels con precisión
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -29,3 +30,20 @@ jobs:
           # Si el mensaje del commit contiene #major, #minor o #patch
           # O si usas labels en el PR (opción recomendada)
           release_branches: main
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
+          generate_release_notes: true
+          # Marcamos como pre-release si el tag contiene -rc o -alpha
+          prerelease: ${{ contains(steps.tag_version.outputs.new_tag, '-rc') || contains(steps.tag_version.outputs.new_tag, '-alpha') }}
+          files: |
+            audit/*.sh
+            hardening/*.sh
+            lib/*.sh
+            maintenance/*.sh
+            scripts/*.sh
+            tests/*.sh
