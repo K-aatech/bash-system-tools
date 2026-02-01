@@ -41,8 +41,8 @@ El *script* requiere privilegios de **root** para rotación de *logs*, verificac
 Para desplegar el monitor como una herramienta global del sistema:
 
 ```bash
-# 1. Descargar la versión estable v1.5.0
-sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/v1.5.0/audit/sys-audit-check.sh
+# 1. Descargar la versión estable v1.6.0
+sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/v1.6.0/audit/sys-audit-check.sh
 
 # 2. Asegurar propiedad y permisos restringidos (Solo Root)
 sudo chown root:root /usr/local/bin/sys-audit-check.sh
