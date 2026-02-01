@@ -1,9 +1,11 @@
 # *Bash System Tools* (BST) | K'aatech
 
-![Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?label=version&color=blue)
-![Linting Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg?branch=dev)
+![Main Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools)
+![Dev Build Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg?branch=dev)
 ![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
+![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
 [![Documentation](https://img.shields.io/badge/docs-Engineering%20Manuals-lightgrey)](./docs)
+
 
 Conjunto de herramientas de automatización y auditoría para la gestión profesional de infraestructuras Linux. Estas herramientas están diseñadas siguiendo principios de seguridad, idempotencia y trazabilidad.
 

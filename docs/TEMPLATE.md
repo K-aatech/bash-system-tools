@@ -1,5 +1,10 @@
 # Engineering Manual: [nombre-del-script].sh
 
+![Main Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools)
+![Dev Build Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg?branch=dev)
+![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
+![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
+
 ## 1. Descripción General
 [Descripción breve y clara de qué hace el script, qué problema resuelve y por qué es necesario en la infraestructura de K'aatech.]
 
