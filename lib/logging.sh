@@ -9,11 +9,14 @@ set -euo pipefail
 # --- Smart Color Detection ---
 # Only use ANSI colors if output is a terminal
 if [[ -t 1 || -t 2 ]]; then
-    readonly CLR_RESET='\033[0m'
-    readonly CLR_BLUE='\033[34m'
-    readonly CLR_YELLOW='\033[33m'
-    readonly CLR_RED='\033[31m'
-    readonly CLR_GREEN='\033[32m'
+    # Corporate color definitions (TrueColor)
+    readonly CLR_RESET='\033[38;2;220;220;220m'  # #DCDCDC
+    readonly CLR_BLUE='\033[38;2;21;133;181m'   # #1585B5
+    readonly CLR_GREEN='\033[38;2;76;175;80m'   # #4CAF50
+    readonly CLR_RED='\033[38;2;153;27;27m'     # #991B1B
+    readonly CLR_YELLOW='\033[38;2;251;202;4m'  # #FBCA04
+    # Close color codes with original reset
+    readonly CLR_OFF='\033[0m'
 else
     readonly CLR_RESET=''
     readonly CLR_BLUE=''
@@ -35,18 +38,16 @@ log_event() {
 
     case "$level" in
         "INFO")
-            echo -e "${CLR_BLUE}[INFO]${CLR_RESET} $timestamp - $message"
+            echo -e "${CLR_BLUE}[INFO]${CLR_OFF} ${CLR_RESET}$timestamp - $message${CLR_OFF}"
             ;;
         "OK")
-            echo -e "${CLR_GREEN}[ OK ]${CLR_RESET} $timestamp - $message"
+            echo -e "${CLR_GREEN}[ OK ]${CLR_OFF} ${CLR_RESET}$timestamp - $message${CLR_OFF}"
             ;;
         "WARN")
-            # Redirect to stderr for warnings
-            echo -e "${CLR_YELLOW}[WARN]${CLR_RESET} $timestamp - $message" >&2
+            echo -e "${CLR_YELLOW}[WARN]${CLR_OFF} ${CLR_RESET}$timestamp - $message${CLR_OFF}" >&2
             ;;
         "CRIT")
-            # Redirect to stderr for critical errors
-            echo -e "${CLR_RED}[CRIT]${CLR_RESET} $timestamp - $message" >&2
+            echo -e "${CLR_RED}[CRIT]${CLR_OFF} ${CLR_RESET}$timestamp - $message${CLR_OFF}" >&2
             ;;
     esac
 

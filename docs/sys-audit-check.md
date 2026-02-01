@@ -1,9 +1,9 @@
 # Manual de Ingeniería: (`audit/sys-audit-check.sh`)
 
-![Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?label=version&color=blue)
-![Linting Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg?branch=dev)
-![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
+![Main Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools)
+![Dev Build Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg?branch=dev)
 ![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
+![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
 
 ## 1. Descripción General
 *Utility* profesional de auditoría para la infraestructura de K'aatech. Diseñada para proporcionar visibilidad inmediata sobre la salud, seguridad y rendimiento de servidores Linux (optimizada para Ubuntu Server 22.04+).

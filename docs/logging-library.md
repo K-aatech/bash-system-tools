@@ -1,5 +1,10 @@
 # Engineering Manual: logging.sh (*Core Library*)
 
+![Main Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools)
+![Dev Build Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg?branch=dev)
+![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
+![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
+
 ## 1. Descripción General
 Librería centralizada de funciones de registro (*logging*) y gestión de archivos para el ecosistema **K'aatech**. Su propósito es estandarizar cómo todos los *scripts* de la *suite* reportan eventos, gestionan colores en terminal y mantienen un histórico de *logs* organizado mediante rotación automática.
 
