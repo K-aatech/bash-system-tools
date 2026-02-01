@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # =========================================================================================================================
 # Script Name: logging.sh
-# Version:     1.5.0
-# Description: K'aatech Bash System Tools - Core Logging Library v1.5.0
+# Version:     1.6.0
+# Description: K'aatech Bash System Tools - Core Logging Library v1.6.0
 # License:     MIT
 # =========================================================================================================================
 set -euo pipefail

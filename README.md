@@ -26,8 +26,8 @@ sudo ./audit/sys-audit-check.sh
 ### Opción B: *Script* individual
 Ideal para auditorías rápidas en un solo servidor.
 ```bash
-# Descarga la versión estable v1.5.0
-sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/v1.5.0/audit/sys-audit-check.sh
+# Descarga la versión estable v1.6.0
+sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/v1.6.0/audit/sys-audit-check.sh
 sudo chmod 700 /usr/local/bin/sys-audit-check.sh
 ```
 
