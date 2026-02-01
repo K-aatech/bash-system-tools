@@ -22,8 +22,10 @@ else
     readonly CLR_GREEN=''
 fi
 # Log file path with default
-: "${LOG_FILE:=/var/log/kaatech_audit.log}"
+: "${LOG_FILE:=/var/log/kaatech_report.log}"
+: "${MAX_LOG_FILES:=5}"
 export LOG_FILE
+export MAX_LOG_FILES
 
 log_event() {
     local level="${1:-INFO}"
@@ -52,4 +54,21 @@ log_event() {
     if [[ -w "$LOG_FILE" || -w "$(dirname "$LOG_FILE")" ]]; then
         echo "[$level] $timestamp - $message" >> "$LOG_FILE" 2>/dev/null || true
     fi
+}
+
+rotate_logs() {
+    # Check if log file exists and we have permissions
+    if [[ -f "$LOG_FILE" ]]; then
+        if [[ ! -w $(dirname "$LOG_FILE") ]]; then
+            # Silent fallback to stderr if /var/log is not writable
+            return
+        fi
+
+        # Manual rotation for independence from logrotate
+        for i in $(seq $((MAX_LOG_FILES - 1)) -1 1); do
+            [[ -f "${LOG_FILE}.$i" ]] && mv "${LOG_FILE}.$i" "${LOG_FILE}.$((i + 1))"
+        done
+        mv "$LOG_FILE" "${LOG_FILE}.1"
+    fi
+    touch "$LOG_FILE"
 }

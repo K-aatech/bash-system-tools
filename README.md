@@ -1,9 +1,9 @@
-# Bash System Tools (BST) | K'aatech
+# *Bash System Tools* (BST) | K'aatech
 
 ![Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?label=version&color=blue)
-![Linting Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg)
+![Linting Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg?branch=dev)
 ![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
-[![Documentation](https://img.shields.io/badge/docs-Engineering%20Manuals-lightgrey)](./docs/sys-audit-check.md)
+[![Documentation](https://img.shields.io/badge/docs-Engineering%20Manuals-lightgrey)](./docs)
 
 Conjunto de herramientas de automatización y auditoría para la gestión profesional de infraestructuras Linux. Estas herramientas están diseñadas siguiendo principios de seguridad, idempotencia y trazabilidad.
 
@@ -11,7 +11,7 @@ Conjunto de herramientas de automatización y auditoría para la gestión profes
 
 ## 🚀 Instalación y Uso
 
-### Opción A: Suite Completa (Recomendado)
+### Opción A: *Suite* Completa (Recomendado)
 Ideal para administradores que usarán múltiples herramientas de la colección.
 ```bash
 git clone https://github.com/K-aatech/bash-system-tools.git
@@ -21,7 +21,7 @@ sudo chmod +x */*.sh
 sudo ./audit/sys-audit-check.sh
 ```
 
-### Opción B: Script individual
+### Opción B: *Script* individual
 Ideal para auditorías rápidas en un solo servidor.
 ```bash
 # Descarga la versión estable v1.5.0
@@ -31,7 +31,7 @@ sudo chmod 700 /usr/local/bin/sys-audit-check.sh
 
 ---
 
-## 🛠 Arquitectura del *Toolkit*
+## 🏗️ Arquitectura del *Toolkit*
 Este proyecto sigue un diseño modular. Los *scripts* de herramientas (`/audit`, `/hardening`, etc.) dependen de un conjunto de librerías centralizadas en `/lib`.
 
 > [!IMPORTANT]
@@ -39,7 +39,7 @@ Este proyecto sigue un diseño modular. Los *scripts* de herramientas (`/audit`,
 
 ---
 
-## 🛠 Catálogo de Herramientas
+## 🧰 Catálogo de Herramientas
 
 | Herramienta | Categoría | Descripción | Documentación |
 | :--- | :--- | :--- | :--- |
@@ -48,36 +48,36 @@ Este proyecto sigue un diseño modular. Los *scripts* de herramientas (`/audit`,
 <br>
 
 > [!TIP]
-> Cada herramienta incluye un sistema de rotación de logs automático en `/var/log/kaatech_audit.log` y validación de privilegios de *root*.
+> Cada herramienta incluye un sistema de rotación de logs automático en `/var/log/kaatech_report.log` y validación de privilegios de *root*.
 
 ---
 
-## 📂 Estructura del Toolkit
+## 📂 Estructura del *Toolkit*
 
-- **/audit:** Scripts de recolección de información sin cambios en el sistema.
+- **/audit:** *Scripts* de recolección de información sin cambios en el sistema.
 - **/hardening:** Aplicación de políticas de seguridad y cierre de brechas.
-- **/lib:** Funciones core compartidas (logging, manejo de errores).
-- **/maintenance:** Automatización de tareas rutinarias (logs, backups, updates).
+- **/lib:** Funciones *core* compartidas (*logging*, manejo de errores).
+- **/maintenance:** Automatización de tareas rutinarias (*logs*, *backups*, *updates*).
 
 ---
 
-## 🛠 Requisitos Previos
+## 📦 Requisitos Previos
 
-Antes de ejecutar cualquier script, asegúrate de cumplir con:
+Antes de ejecutar cualquier *script*, asegúrate de cumplir con:
 - **OS:** Ubuntu 22.04+ / Debian 11+ / RHEL 9+
-- **Privilegios:** La mayoría de los scripts requieren acceso `root` o `sudo`.
+- **Privilegios:** La mayoría de los *scripts* requieren acceso `root` o `sudo`.
 - **Dependencias:** `curl`, `wget`, `grep`, `awk`.
 
 ---
 
-## 🤝 Guía de Contribución
+## 🫱🏻‍🫲🏾 Guía de Contribución
 Para mantener la calidad de **K'aatech**, todas las contribuciones deben:
 
-1. Pasar el linter de ShellCheck.
+1. Pasar el linter de **ShellCheck**.
 2. Seguir el estilo de codificación definido en la [Guía de Estilo](docs/style-guide.md).
-3. Usar Conventional Commits para los mensajes de Git.
+3. Usar *Conventional Commits* para los mensajes de Git.
 
-## 🛡 Disclaimer
+## 🛡️ *Disclaimer*
 
 Este software se proporciona "tal cual" bajo la Licencia **MIT**. Consulta el archivo [LICENSE](/LICENSE) para más detalles.  \
 Para soporte profesional, visita [kaatech.mx](https://kaatech.mx).
