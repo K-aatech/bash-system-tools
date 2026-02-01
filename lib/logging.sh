@@ -23,6 +23,7 @@ else
     readonly CLR_YELLOW=''
     readonly CLR_RED=''
     readonly CLR_GREEN=''
+    readonly CLR_OFF=''
 fi
 # Log file path with default
 : "${LOG_FILE:=/var/log/kaatech_report.log}"
