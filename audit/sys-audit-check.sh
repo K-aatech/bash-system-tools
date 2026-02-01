@@ -16,28 +16,11 @@ declare -ri THRESHOLD_DISK=90
 declare -ri THRESHOLD_RAM=80
 declare -ri THRESHOLD_TEMP=75 # Celsius
 declare -r  THRESHOLD_IOWAIT="5.0" # Max % of CPU waiting for I/O
-declare -r  LOG_FILE="/var/log/kaatech_audit.log"
-declare -ri MAX_LOG_FILES=5
+
+declare -x LOG_FILE="/var/log/kaatech_audit.log"
+declare -xi MAX_LOG_FILES=5  # Max number of rotated log files to keep. -i forces integer export
 
 # --- Core Functions ---
-
-rotate_logs() {
-    # Check if log file exists and we have permissions
-    if [[ -f "$LOG_FILE" ]]; then
-        if [[ ! -w $(dirname "$LOG_FILE") ]]; then
-            # Silent fallback to stderr if /var/log is not writable
-            return
-        fi
-
-        # Manual rotation for independence from logrotate
-        for i in $(seq $((MAX_LOG_FILES - 1)) -1 1); do
-            [[ -f "${LOG_FILE}.$i" ]] && mv "${LOG_FILE}.$i" "${LOG_FILE}.$((i + 1))"
-        done
-        mv "$LOG_FILE" "${LOG_FILE}.1"
-    fi
-    touch "$LOG_FILE"
-}
-
 # --- Library Loading with Fallback ---
 LIB_PATH="$(dirname "$0")/../lib/logging.sh"
 
@@ -248,7 +231,7 @@ main() {
     check_thermal_status
 
     log_event "INFO" "------------------------------------------"
-    log_event "INFO" "Audit process finished successfully."
+    log_event "INFO" "Audit complete. Summary saved to $LOG_FILE"
 }
 
 # Execution

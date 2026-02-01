@@ -1,5 +1,10 @@
 # Guía de Estilo de Ingeniería | K'aatech
 
+![Main Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools)
+![Dev Build Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg?branch=dev)
+![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
+![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
+
 Este documento define los estándares de codificación para todos los scripts de automatización e infraestructura. El cumplimiento de estas reglas es obligatorio para garantizar la confiabilidad en entornos de producción.
 
 ## 1. Estándares de Bash
