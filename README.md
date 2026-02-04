@@ -101,4 +101,4 @@ Este proyecto sigue el estándar de ***[Semantic Versioning (SemVer)](https://se
 ## 🛡️ Descargo de responsabilidad (*Disclaimer*)
 
 Este software se proporciona "tal cual" bajo la Licencia **MIT**. Consulta el archivo [LICENSE](/LICENSE) para más detalles.  \
-Para soporte profesional, visita [kaatech.mx](https://kaatech.mx).
+Para soporte profesional, visita **[kaatech.mx](https://kaatech.mx)**.
