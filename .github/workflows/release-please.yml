@@ -1,0 +1,23 @@
+name: Release Management
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          # 'simple' es el estándar para repositorios de scripts/herramientas generales
+          release-type: simple
+          # Reemplaza con el nombre de tu proyecto/repo
+          package-name: "K-aatech/bash-system-tools"
+          # Asegura que se use la versión cargada en el repo
+          token: ${{ secrets.GITHUB_TOKEN }}

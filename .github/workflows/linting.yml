@@ -4,15 +4,21 @@ permissions:
   contents: read
 
 on:
-  push:
+  push:                 # Feedback temprano al pushear
     branches:
         - dev
-        - 'feat/**'    # Cubre cualquier rama que empiece con feat/
-        - 'fix/**'     # Cubre cualquier rama que empiece con fix/
-  pull_request:
+        - 'feat/**'     # Cubre cualquier rama que empiece con feat/
+        - 'fix/**'      # Cubre cualquier rama que empiece con fix/
+        - 'release/**'  # Cubre cualquier rama que empiece con release/
+    paths:
+        - '**.sh'       # Solo se activa si hay cambios en archivos .sh
+  pull_request:         # Gatekeeper para el merge
     branches:
         - main
-        - dev   # Validate PRs against dev branch as well
+        - dev           # Validate PRs against dev branch as well
+        - 'release/**'  # Validamos PRs que vayan a release/
+    paths:
+        - '**.sh'       # Solo se activa si hay cambios en archivos .sh
 
 jobs:
   shellcheck:
