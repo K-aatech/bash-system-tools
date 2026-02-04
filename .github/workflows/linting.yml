@@ -6,15 +6,14 @@ permissions:
 on:
   push:                 # Feedback temprano al pushear
     branches:
-        - dev
-        - 'feat/**'     # Cubre cualquier rama que empiece con feat/
-        - 'fix/**'      # Cubre cualquier rama que empiece con fix/
-        - 'release/**'  # Cubre cualquier rama que empiece con release/
+        - 'feat/**'     # Feedback temprano en desarrollo
+        - 'fix/**'      # Feedback temprano en correcciones
+        - 'hotfix/**'   # Feedback temprano en hotfixes
   pull_request:         # Gatekeeper para el merge
     branches:
-        - main
-        - dev           # Validate PRs against dev branch as well
-        - 'release/**'  # Validamos PRs que vayan a release/**
+        - main          # Gatekeeper final para producción
+        - dev           # Validación para integrar nuevas funcionalidades
+        - 'release/**'  # Validación para ramas de estabilización
 
 jobs:
   shellcheck:
