@@ -3,7 +3,7 @@
 ![Stable Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?color=blue&label=stable)
 ![Pre-release Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?include_prereleases&color=orange&label=dev-build)
 ![Dev Build Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg?branch=dev)
-![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
+![Platform](https://img.shields.io/badge/platform-Linux-steelblue)
 ![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
 [![Documentation](https://img.shields.io/badge/docs-Engineering%20Manuals-lightgrey)](./docs)
 
@@ -27,8 +27,8 @@ sudo ./audit/sys-audit-check.sh
 ### Opción B: *Script* individual
 Ideal para auditorías rápidas en un solo servidor.
 ```bash
-# Descarga la versión estable v1.6.0
-sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/v1.6.0/audit/sys-audit-check.sh
+# Descarga la versión estable v1.7.0
+sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/v1.7.0/audit/sys-audit-check.sh
 sudo chmod 700 /usr/local/bin/sys-audit-check.sh
 ```
 

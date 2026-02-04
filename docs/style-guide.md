@@ -1,9 +1,9 @@
 # Guía de Estilo de Ingeniería | K'aatech
 
 ![Stable Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?color=blue&label=stable)
-![Pre-release Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?include_prereleases&color=orange&label=dev-build)
+![Pre-release Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?include_prereleases&color=orange&label=dev-build)*
 ![Dev Build Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg?branch=dev)
-![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
+![Platform](https://img.shields.io/badge/platform-Linux-steelblue)
 ![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
 
 Este documento define los estándares de codificación para todos los scripts de automatización e infraestructura. El cumplimiento de estas reglas es obligatorio para garantizar la confiabilidad en entornos de producción.
@@ -41,5 +41,5 @@ Si el script genera archivos temporales, debe usar la instrucción `trap` para a
 ## 3. Documentación y Código
 - **Idioma del Código:** Variables, funciones y comentarios técnicos en **Inglés**.
 - **Idioma de Documentación:** Manuales y guías en **Español**.
-- **Mensajes de Commit:** Siguiendo el estándar **Conventional Commits** en **Inglés**.
+- **Mensajes de Commit:** Siguiendo el estándar ***Conventional Commits*** en **Inglés**.
   - Se debe explicar el "por qué" de comandos complejos o flags específicas de herramientas de red/sistema.
