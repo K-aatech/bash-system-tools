@@ -10,8 +10,6 @@ on:
         - 'feat/**'     # Cubre cualquier rama que empiece con feat/
         - 'fix/**'      # Cubre cualquier rama que empiece con fix/
         - 'release/**'  # Cubre cualquier rama que empiece con release/
-    paths:
-        - '**.sh'       # Solo se activa si hay cambios en archivos .sh
   pull_request:         # Gatekeeper para el merge
     branches:
         - main
