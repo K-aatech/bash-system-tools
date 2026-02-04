@@ -4,15 +4,16 @@ permissions:
   contents: read
 
 on:
-  push:
+  push:                 # Feedback temprano al pushear
     branches:
-        - dev
-        - 'feat/**'    # Cubre cualquier rama que empiece con feat/
-        - 'fix/**'     # Cubre cualquier rama que empiece con fix/
-  pull_request:
+        - 'feat/**'     # Feedback temprano en desarrollo
+        - 'fix/**'      # Feedback temprano en correcciones
+        - 'hotfix/**'   # Feedback temprano en hotfixes
+  pull_request:         # Gatekeeper para el merge
     branches:
-        - main
-        - dev   # Validate PRs against dev branch as well
+        - main          # Gatekeeper final para producción
+        - dev           # Validación para integrar nuevas funcionalidades
+        - 'release/**'  # Validación para ramas de estabilización
 
 jobs:
   shellcheck:
@@ -22,7 +23,15 @@ jobs:
       - name: Code Checkout
         uses: actions/checkout@v4
 
+      - name: Check for script changes
+        id: changed-files
+        uses: tj-actions/changed-files@v42
+        with:
+          files: |
+            **.sh
+
       - name: ShellCheck Execution
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: ludeeus/action-shellcheck@master
         with:
           # Escanea todas las carpetas del repo en busca de .sh
@@ -30,3 +39,7 @@ jobs:
         env:
           # Opcional: Ignorar algunos errores específicos si fuera necesario
           SHELLCHECK_OPTS: -e SC1091 # Ignora errores de "source" de archivos externos
+
+      - name: Skip ShellCheck
+        if: steps.changed-files.outputs.any_changed == 'false'
+        run: echo "No scripts changed, reporting success to satisfy status checks."

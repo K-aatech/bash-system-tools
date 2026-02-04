@@ -3,7 +3,7 @@
 ![Stable Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?color=blue&label=stable)
 ![Pre-release Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?include_prereleases&color=orange&label=dev-build)
 ![Dev Build Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg?branch=dev)
-![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)
+![Platform](https://img.shields.io/badge/platform-Linux-steelblue)
 ![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
 [![Documentation](https://img.shields.io/badge/docs-Engineering%20Manuals-lightgrey)](./docs)
 
@@ -27,8 +27,8 @@ sudo ./audit/sys-audit-check.sh
 ### Opción B: *Script* individual
 Ideal para auditorías rápidas en un solo servidor.
 ```bash
-# Descarga la versión estable v1.6.0
-sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/v1.6.0/audit/sys-audit-check.sh
+# Descarga la versión estable v1.7.0
+sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/v1.7.0/audit/sys-audit-check.sh
 sudo chmod 700 /usr/local/bin/sys-audit-check.sh
 ```
 
@@ -73,14 +73,32 @@ Antes de ejecutar cualquier *script*, asegúrate de cumplir con:
 
 ---
 
+## 📌 Control de Versiones
+
+Este proyecto sigue el estándar de ***[Semantic Versioning (SemVer)](https://semver.org/)***. La automatización de lanzamientos se gestiona mediante ***Release Please***.
+
+- **Versiones Estables (*Main*):** Representan código probado y listo para producción. Se identifican como `vX.Y.Z`.
+- **Release Candidates (*Dev*):** Versiones en etapa de pruebas finales. Se identifican con el sufijo `-rc.N` (ej. `v1.7.0-rc.1`).
+- **Historial de Cambios:** Consulta nuestro [CHANGELOG.md](./CHANGELOG.md) (generado automáticamente) para conocer las novedades de cada versión.
+
+---
+
 ## 🫱🏻‍🫲🏾 Guía de Contribución
-Para mantener la calidad de **K'aatech**, todas las contribuciones deben:
 
-1. Pasar el linter de **ShellCheck**.
-2. Seguir el estilo de codificación definido en la [Guía de Estilo](docs/style-guide.md).
-3. Usar *Conventional Commits* para los mensajes de Git.
+¡Las contribuciones son bienvenidas! Para mantener la integridad técnica de la *suite*, seguimos un flujo de trabajo riguroso.
 
-## 🛡️ *Disclaimer*
+> [!NOTE]
+> Antes de empezar, por favor lee nuestra **[Guía Completa de Contribución](./CONTRIBUTING.md)** donde detallamos el flujo de ramas y estándares de código.
+
+**Requisitos rápidos:**
+1. **Ramas:** Toda mejora debe nacer de una rama `feat/*` o `fix/*` y dirigirse a `dev`.
+2. **Calidad:** Es obligatorio pasar el linter ***ShellCheck*** (incluido en nuestro CI).
+3. **Mensajes:** Utilizamos ***Conventional Commits*** (`feat:`, `fix:`, `docs:`, `refactor:`).
+4. **Estilo:** Sigue nuestra **[Guía de Estilo de *Bash*](docs/style-guide.md).**
+
+---
+
+## 🛡️ Descargo de responsabilidad (*Disclaimer*)
 
 Este software se proporciona "tal cual" bajo la Licencia **MIT**. Consulta el archivo [LICENSE](/LICENSE) para más detalles.  \
-Para soporte profesional, visita [kaatech.mx](https://kaatech.mx).
+Para soporte profesional, visita **[kaatech.mx](https://kaatech.mx)**.

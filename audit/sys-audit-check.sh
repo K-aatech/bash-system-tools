@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =========================================================================================================================
 # Script Name: sys-audit-check.sh
-# Version:     1.6.0
+# Version:     1.7.0
 # Description: Professional system health audit with Thermal Monitoring,
 #              file integrity checks, network audit and log rotation for K'aatech infrastructure.
 # License:     MIT
@@ -11,7 +11,7 @@
 set -euo pipefail
 
 # Environment Variables and Constants
-declare -r VERSION="1.6.0"
+declare -r VERSION="1.7.0"
 declare -ri THRESHOLD_DISK=90
 declare -ri THRESHOLD_RAM=80
 declare -ri THRESHOLD_TEMP=75 # Celsius
