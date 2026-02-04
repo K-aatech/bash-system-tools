@@ -75,7 +75,7 @@ Antes de ejecutar cualquier *script*, asegúrate de cumplir con:
 
 ## 📌 Control de Versiones
 
-Este proyecto sigue el estándar de *[Semantic Versioning (SemVer)](https://semver.org/)*. La automatización de lanzamientos se gestiona mediante ***Release Please***.
+Este proyecto sigue el estándar de ***[Semantic Versioning (SemVer)](https://semver.org/)***. La automatización de lanzamientos se gestiona mediante ***Release Please***.
 
 - **Versiones Estables (*Main*):** Representan código probado y listo para producción. Se identifican como `vX.Y.Z`.
 - **Release Candidates (*Dev*):** Versiones en etapa de pruebas finales. Se identifican con el sufijo `-rc.N` (ej. `v1.7.0-rc.1`).
@@ -94,7 +94,7 @@ Este proyecto sigue el estándar de *[Semantic Versioning (SemVer)](https://semv
 1. **Ramas:** Toda mejora debe nacer de una rama `feat/*` o `fix/*` y dirigirse a `dev`.
 2. **Calidad:** Es obligatorio pasar el linter ***ShellCheck*** (incluido en nuestro CI).
 3. **Mensajes:** Utilizamos ***Conventional Commits*** (`feat:`, `fix:`, `docs:`, `refactor:`).
-4. **Estilo:** Sigue nuestra [Guía de Estilo de Bash](docs/style-guide.md).
+4. **Estilo:** Sigue nuestra **[Guía de Estilo de *Bash*](docs/style-guide.md).**
 
 ---
 

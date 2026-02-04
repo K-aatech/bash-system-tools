@@ -2,7 +2,7 @@
 # =========================================================================================================================
 # Script Name: logging.sh
 # Version:     1.7.0
-# Description: K'aatech Bash System Tools - Core Logging Library v1.6.0
+# Description: K'aatech Bash System Tools - Core Logging Library v1.7.0
 # License:     MIT
 # =========================================================================================================================
 set -euo pipefail
