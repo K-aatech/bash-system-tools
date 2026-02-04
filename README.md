@@ -73,12 +73,30 @@ Antes de ejecutar cualquier *script*, asegúrate de cumplir con:
 
 ---
 
-## 🫱🏻‍🫲🏾 Guía de Contribución
-Para mantener la calidad de **K'aatech**, todas las contribuciones deben:
+## 📌 Control de Versiones
 
-1. Pasar el linter de **ShellCheck**.
-2. Seguir el estilo de codificación definido en la [Guía de Estilo](docs/style-guide.md).
-3. Usar *Conventional Commits* para los mensajes de Git.
+Este proyecto sigue el estándar de *[Semantic Versioning (SemVer)](https://semver.org/)*. La automatización de lanzamientos se gestiona mediante ***Release Please***.
+
+- **Versiones Estables (*Main*):** Representan código probado y listo para producción. Se identifican como `vX.Y.Z`.
+- **Release Candidates (*Dev*):** Versiones en etapa de pruebas finales. Se identifican con el sufijo `-rc.N` (ej. `v1.7.0-rc.1`).
+- **Historial de Cambios:** Consulta nuestro [CHANGELOG.md](./CHANGELOG.md) (generado automáticamente) para conocer las novedades de cada versión.
+
+---
+
+## 🫱🏻‍🫲🏾 Guía de Contribución
+
+¡Las contribuciones son bienvenidas! Para mantener la integridad técnica de la *suite*, seguimos un flujo de trabajo riguroso.
+
+> [!NOTE]
+> Antes de empezar, por favor lee nuestra **[Guía Completa de Contribución](./CONTRIBUTING.md)** donde detallamos el flujo de ramas y estándares de código.
+
+**Requisitos rápidos:**
+1. **Ramas:** Toda mejora debe nacer de una rama `feat/*` o `fix/*` y dirigirse a `dev`.
+2. **Calidad:** Es obligatorio pasar el linter ***ShellCheck*** (incluido en nuestro CI).
+3. **Mensajes:** Utilizamos ***Conventional Commits*** (`feat:`, `fix:`, `docs:`, `refactor:`).
+4. **Estilo:** Sigue nuestra [Guía de Estilo de Bash](docs/style-guide.md).
+
+---
 
 ## 🛡️ *Disclaimer*
 
