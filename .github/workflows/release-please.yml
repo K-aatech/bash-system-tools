@@ -17,7 +17,5 @@ jobs:
         with:
           # 'simple' es el estándar para repositorios de scripts/herramientas generales
           release-type: simple
-          # Reemplaza con el nombre de tu proyecto/repo
-          package-name: "K-aatech/bash-system-tools"
           # Asegura que se use la versión cargada en el repo
           token: ${{ secrets.GITHUB_TOKEN }}
