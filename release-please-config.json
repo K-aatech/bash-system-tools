@@ -3,6 +3,8 @@
     ".": {
       "release-type": "simple",
       "include-component-in-tag": false,
+      "draft": false,
+      "prerelease": false,
       "changelog-sections": [
         {"type": "feat", "section": "🚀 Features", "hidden": false},
         {"type": "fix", "section": "🐛 Bug Fixes", "hidden": false},
