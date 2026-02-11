@@ -9,13 +9,11 @@ on:
         - 'feat/**'     # Feedback temprano en desarrollo
         - 'fix/**'      # Feedback temprano en correcciones
         - 'hotfix/**'   # Feedback temprano en hotfixes
-        #- 'release-please--**' # Comodín específico para el bot
   pull_request:         # Gatekeeper para el merge
     branches:
         - main          # Gatekeeper final para producción
         - dev           # Validación para integrar nuevas funcionalidades
         - 'release/**'  # Validación para ramas de estabilización
-        - 'release-please--**' # Comodín específico para el bot
 
 jobs:
   shellcheck:
