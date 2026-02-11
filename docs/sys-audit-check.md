@@ -1,6 +1,6 @@
 # Manual de Ingeniería: (`audit/sys-audit-check.sh`)
 
-![Stable Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?color=blue&label=stable)
+![Stable Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?exclude_prereleases&color=blue&label=stable)
 ![Pre-release Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?include_prereleases&color=orange&label=dev-build)
 ![Dev Build Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg?branch=dev)
 ![Platform](https://img.shields.io/badge/platform-Linux-steelblue)
@@ -53,7 +53,8 @@ sudo chmod 700 /usr/local/bin/sys-audit-check.sh
 sudo sys-audit-check.sh
 ```
 
-> [!NOTE] Al instalarlo en `/usr/local/bin`, puedes ejecutarlo simplemente llamando a `sys-audit-check.sh` desde cualquier ubicación si dicha ruta está en tu `$PATH`.
+> [!NOTE]
+> Al instalarlo en `/usr/local/bin`, puedes ejecutarlo simplemente llamando a `sys-audit-check.sh` desde cualquier ubicación si dicha ruta está en tu `$PATH`.
 
 ## 5. Resolución de Problemas (*Troubleshooting*)
 * **"*Thermal sensors not reporting data*":** Verifique si está en una VM o si necesita ejecutar `sudo sensors-detect`.
