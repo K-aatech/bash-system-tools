@@ -19,3 +19,4 @@ jobs:
           release-type: simple
           # Asegura que se use la versión cargada en el repo
           token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
