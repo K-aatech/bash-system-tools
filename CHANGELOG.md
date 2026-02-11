@@ -3,12 +3,18 @@
 ## [1.7.0](https://github.com/K-aatech/bash-system-tools/compare/v1.7.0-rc.2...v1.7.0) (2026-02-11)
 
 
-### Features
+### 🚀 Features
 
-* promote release candidate to stable v1.7.0 ([4e233df](https://github.com/K-aatech/bash-system-tools/commit/4e233dfefca9ecf496903c880d30eccf11039403))
+* implement release-please and update repository architecture (https://github.com/K-aatech/bash-system-tools/issues/22) ([5982fad](https://github.com/K-aatech/bash-system-tools/commit/5982fad2cbf83400abb47c7f6fdf6172b352b6fa))
 * promote release candidate to stable v1.7.0 ([#27](https://github.com/K-aatech/bash-system-tools/issues/27)) ([620e9aa](https://github.com/K-aatech/bash-system-tools/commit/620e9aa395cb6b5e30d0a601080acaf478dae5f6))
-* promote release to v1.7.0 stable ([f7d3941](https://github.com/K-aatech/bash-system-tools/commit/f7d3941be46f46de6b9513aa2ae1eb8433143c5c))
 
+### 🐛 Bug Fixes
+
+* fix status check blockage by making linter job always-run  ([16d7c45](https://github.com/K-aatech/bash-system-tools/commit/16d7c451cc3c3396f787d3c6c9538d0d25ece5d6))
+
+### ⚙️ CI/CD & Infra
+
+* ci: refine linter triggers and implement RC automation ([#25](https://github.com/K-aatech/bash-system-tools/pull/25) ([756e084](https://github.com/K-aatech/bash-system-tools/commit/756e0848c8b1b005dffa74118e4e504e341bbd0d))
 
 ### Miscellaneous Chores
 
