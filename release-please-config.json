@@ -3,7 +3,6 @@
     ".": {
       "release-type": "simple",
       "include-component-in-tag": false,
-      "release-as": "1.7.0",
       "draft": false,
       "prerelease": false,
       "changelog-sections": [
