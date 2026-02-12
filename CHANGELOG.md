@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.1](https://github.com/K-aatech/bash-system-tools/compare/v1.7.0...v1.7.1) (2026-02-12)
+
+
+### Bug Fixes
+
+* final adjustment to linter reporting ([#37](https://github.com/K-aatech/bash-system-tools/issues/37)) ([9858b58](https://github.com/K-aatech/bash-system-tools/commit/9858b5842b11b268d49a7d85e4c58b645f7281b1))
+* update badges filters and minor style corrections. ([#35](https://github.com/K-aatech/bash-system-tools/issues/35)) ([12f468c](https://github.com/K-aatech/bash-system-tools/commit/12f468c50d156f321239e4abc4bd959d5cbe5170))
+
 ## [1.7.0](https://github.com/K-aatech/bash-system-tools/compare/v1.7.0-rc.2...v1.7.0) (2026-02-11)
 
 
