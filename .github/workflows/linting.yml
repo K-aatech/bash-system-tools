@@ -15,7 +15,6 @@ on:
 jobs:
   lint-shellcheck:
     name: Runner ShellCheck
-    if: github.actor != 'release-please[bot]'
     runs-on: ubuntu-latest
 
     steps:
