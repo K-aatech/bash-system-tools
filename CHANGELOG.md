@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.2](https://github.com/K-aatech/bash-system-tools/compare/v1.7.1...v1.7.2) (2026-02-12)
+
+
+### Bug Fixes
+
+* **ci:** correct release-please changelog config and prevent duplicate lint runs on main push ([#52](https://github.com/K-aatech/bash-system-tools/issues/52)) ([4676c1b](https://github.com/K-aatech/bash-system-tools/commit/4676c1b694e1db8feb32c6c24f101584491daf38))
+
 ## [1.7.1](https://github.com/K-aatech/bash-system-tools/compare/v1.7.0...v1.7.1) (2026-02-12)
 
 
