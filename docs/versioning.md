@@ -1,6 +1,6 @@
 # Política de Versiones
 
-Este repositorio sigue el Versionado Semántico (SemVer) e implementa **Commits Convencionales** para garantizar versiones deterministas y automatizadas mediante `release-please`.
+Este repositorio sigue el **Versionado Semántico (SemVer)** e implementa ***Conventional Commits*** para garantizar versiones deterministas y automatizadas mediante `release-please`.
 
 ---
 
@@ -17,44 +17,43 @@ Ejemplo:
 ### MAYOR
 
 Se incrementa cuando:
-- Se introduce un cambio importante.
-- Se modifican o eliminan los indicadores de la CLI.
+- Se introduce un cambio incompatible con versiones anteriores.
+- Se eliminan o modifican indicadores de CLI.
 - Se rompe intencionalmente la compatibilidad con versiones anteriores.
 
 Debe declararse usando:
 
-feat!: descripción
+`feat!: descripción`
 
 o
 
-BREAKING CHANGE: descripción
+`BREAKING CHANGE: descripción`
 
 ---
 
 ### MENOR
 Se incrementa cuando:
-- Se añade una nueva característica.
-- Se introduce una nueva funcionalidad de forma compatible con versiones anteriores.
+- Se añade nueva funcionalidad compatible con versiones anteriores.
 
 Activado por:
 
-feat: descripción
+`feat: descripción`
 
 ---
 
 ### PATCH
 Se incrementa cuando:
 - Se corrige un error.
-- Se mejora el rendimiento.
-- La refactorización interna se realiza sin comprometer la compatibilidad.
-- Se realizan ajustes de integración continua (CI) o de infraestructura.
+- Se mejora rendimiento.
+- Se realizan ajustes internos de CI/CD o infraestructura.
+- Se refactoriza sin romper compatibilidad.
 
 Activado por:
 
-fix:
-perf:
-refactor:
-ci:
+`fix:`
+`perf:`
+`refactor:`
+`ci:`
 
 ---
 
@@ -71,24 +70,22 @@ Se permiten y aplican los siguientes tipos de *commits*:
 - test
 - chore
 
-Los *commits* deben seguir este formato:
+Los *commits* **deben** seguir este formato:
 
-type(alcance opcional): descripción breve
+`type(alcance opcional): descripción breve`
 
 Ejemplos:
 
-feat(cli): añadir modo interactivo
-fix: gestionar la validación de entrada vacía
-ci: actualizar el flujo de trabajo de la versión
-docs: aclarar los pasos de instalación
+`feat(cli): Add interactive mode`
+`fix: Handle empty input validation`
+`ci: Update version workflow`
+`docs: Clarify installation steps`
 
 ---
 
-## Generación del registro de cambios
+## Generación de *CHANGELOG*
 
-Las entradas del registro de cambios se generan automáticamente mediante `release-please`.
-
-Las secciones se agrupan de la siguiente manera:
+`release-please` genera automáticamente el registro de cambios agrupado por secciones:
 
 - 🚀 Features
 - 🐛 Bug Fixes
@@ -98,17 +95,21 @@ Las secciones se agrupan de la siguiente manera:
 - 📚 Documentation
 - 🧪 Tests
 
-Las confirmaciones de mantenimiento (`chore`) se ocultan del registro de cambios.
+> [!NOTE]
+> Las confirmaciones tipo `chore` se ocultan del *changelog*.
+
 
 ---
 
-## Proceso de lanzamiento
+## Flujo de trabajo trunk-based
 
-1. Los cambios se fusionan en `main`.
-2. `release-please` evalúa las confirmaciones.
-3. Se genera automáticamente una solicitud de versión.
-4. Tras la fusión, se crea una etiqueta de versión.
-5. `CHANGELOG.md` se actualiza automáticamente.
+1. Todas las mejoras se desarrollan en ramas `feat/*` o `fix/*`.
+2. Se crean PR hacia `main`.
+3. `commitlint` valida la convención.
+4. `release-please` genera automáticamente la PR de *release*, etiquetas y actualización del *changelog*.
+5. Los *merges* en `main` generan las versiones estables.
+6. *Release Candidates* (RC) son manuales y opcionales; se etiquetan solo cuando se necesite *pre-release*.
+
 
 > [!CAUTION]
 > **No se permite la actualización manual de versiones.**
@@ -117,7 +118,6 @@ Las confirmaciones de mantenimiento (`chore`) se ocultan del registro de cambios
 
 ## Principios de gobernanza
 
-- Todas las confirmaciones deben pasar la validación de `commitlint`.
-- La combinación y la fusión deben conservar el formato convencional de las confirmaciones.
-- Se prohíben las subidas directas a `main`.
+- Todos los commits deben pasar `commitlint`.
+- No se permiten push directo a `main`.
 - Los lanzamientos son totalmente automatizados y deterministas.

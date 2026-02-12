@@ -75,11 +75,13 @@ Antes de ejecutar cualquier *script*, asegúrate de cumplir con:
 
 ## 📌 Control de Versiones
 
-Este proyecto sigue el estándar de ***[Semantic Versioning (SemVer)](https://semver.org/)***. La automatización de lanzamientos se gestiona mediante ***Release Please***.
+Este proyecto sigue el estándar de ***[Semantic Versioning (SemVer)](https://semver.org/)*** y ***Conventional Commits***. La automatización de lanzamientos se gestiona mediante ***Release Please***.
 
-- **Versiones Estables (*Main*):** Representan código probado y listo para producción. Se identifican como `vX.Y.Z`.
-- **Release Candidates (*Dev*):** Versiones en etapa de pruebas finales. Se identifican con el sufijo `-rc.N` (ej. `v1.7.0-rc.1`).
-- **Historial de Cambios:** Consulta nuestro [CHANGELOG.md](./CHANGELOG.md) (generado automáticamente) para conocer las novedades de cada versión.
+- **Versiones Estables (*Main*):** Código probado y listo para producción, etiquetado como `vX.Y.Z`.
+- ***Release Candidates* (Dev / RC):** Versiones de prueba finales, etiquetadas con sufijo `-rc.N` (ej. `v1.7.0-rc.1`), generadas manualmente según sea necesario.
+- **Registro de Cambios:** Consulta el [CHANGELOG.md](./CHANGELOG.md) generado automáticamente.
+- **Flujo *Trunk-Based*:** Toda mejora nace de una rama `feat/*` o `fix/*` → PR → validación por `commitlint` → *merge* en `main` → *release* automático.
+- **Referencia:** Consulta nuestra [Política de Versiones](./docs/versioning.md) para todos los detalles del flujo *trunk-based*, convenciones de *commit* y generación de versiones.
 
 ---
 
