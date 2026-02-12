@@ -1,51 +1,48 @@
-name: Linting de Scripts Bash
+name: Lint Bash
 
 permissions:
   contents: read
 
 on:
-  push:                 # Feedback temprano al pushear
+  push:
     branches:
-        - 'feat/**'     # Feedback temprano en desarrollo
-        - 'fix/**'      # Feedback temprano en correcciones
-        - 'hotfix/**'   # Feedback temprano en hotfixes
-  pull_request:         # Gatekeeper para el merge
+        - 'feat/**'
+        - 'fix/**'
+  pull_request:
     branches:
-        - main          # Gatekeeper final para producción
-        - dev           # Validación para integrar nuevas funcionalidades
-        - 'release/**'  # Validación para ramas de estabilización
+        - main
 
 jobs:
-  shellcheck:
+  lint-shellcheck:
     name: Runner ShellCheck
+    if: github.actor != 'release-please[bot]'
     runs-on: ubuntu-latest
-    steps:
-      - name: Code Checkout
-        uses: actions/checkout@v4
 
-      - name: Check for script changes
-        id: changed-files
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed scripts
+        id: changed
         uses: tj-actions/changed-files@v42
         with:
           files: |
             **/*.sh
+          base_sha: ${{ github.event.pull_request.base.sha }}
+          sha: ${{ github.sha }}
 
-      - name: ShellCheck Execution
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: ludeeus/action-shellcheck@master
-        with:
-          # Escanea todas las carpetas del repo en busca de .sh
-          scandir: './'
-        env:
-          # Opcional: Ignorar algunos errores específicos si fuera necesario
-          SHELLCHECK_OPTS: -e SC1091 # Ignora errores de "source" de archivos externos
-
-      - name: Finalize Status
-        # Corre SIEMPRE, haya scripts o no, para dar el "verde" al Ruleset
-        if: always()
+      - name: Skip if no shell scripts changed
+        if: steps.changed.outputs.any_changed != 'true'
         run: |
-          if [ "${{ steps.changed-files.outputs.any_changed }}" == "true" ]; then
-            echo "Checks completed."
-          else
-            echo "No scripts to check, status: Success."
-          fi
+          echo "No shell scripts changed. Skipping ShellCheck."
+          exit 0
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+            version: v0.11.0
+            scandir: './'
+        env:
+          SHELLCHECK_OPTS: -e SC1091 # Ignora errores de "source" de archivos externos
