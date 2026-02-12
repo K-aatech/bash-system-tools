@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.7.1](https://github.com/K-aatech/bash-system-tools/compare/v1.7.0...v1.7.1) (2026-02-12)
+
+
+### Bug Fixes
+
+* align release-please generator and lint gate ([#43](https://github.com/K-aatech/bash-system-tools/issues/43)) ([c7f59f8](https://github.com/K-aatech/bash-system-tools/commit/c7f59f8664e8046aa636a64c096402d668cd307f))
+* **ci:** migrate lint workflow to pull_request_target for bot compatibility ([#46](https://github.com/K-aatech/bash-system-tools/issues/46)) ([95121a5](https://github.com/K-aatech/bash-system-tools/commit/95121a5ebffd771a9829c3e083b89632adaba7a0))
+* final adjustment to linter reporting ([#37](https://github.com/K-aatech/bash-system-tools/issues/37)) ([9858b58](https://github.com/K-aatech/bash-system-tools/commit/9858b5842b11b268d49a7d85e4c58b645f7281b1))
+* generalize lint workflow trigger ([#45](https://github.com/K-aatech/bash-system-tools/issues/45)) ([93b9916](https://github.com/K-aatech/bash-system-tools/commit/93b991604ebd885342e3b673d8c03b88501d2256))
+* restore release-please legacy mode ([#44](https://github.com/K-aatech/bash-system-tools/issues/44)) ([d7f5117](https://github.com/K-aatech/bash-system-tools/commit/d7f5117e5560e66a3939ead169e134bedc44a60a))
+* test release pipeline after trunk migration ([#41](https://github.com/K-aatech/bash-system-tools/issues/41)) ([a1dbcaa](https://github.com/K-aatech/bash-system-tools/commit/a1dbcaadbd9180f1ed6ce2c69ce0a093e506e0b0))
+* update badges filters and minor style corrections. ([#35](https://github.com/K-aatech/bash-system-tools/issues/35)) ([12f468c](https://github.com/K-aatech/bash-system-tools/commit/12f468c50d156f321239e4abc4bd959d5cbe5170))
+
 ## [1.7.0](https://github.com/K-aatech/bash-system-tools/compare/v1.7.0-rc.2...v1.7.0) (2026-02-11)
 
 
