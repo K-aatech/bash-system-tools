@@ -1,0 +1,39 @@
+name: Commitlint
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches-ignore:
+      - main
+  pull_request:
+    branches:
+        - main
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install commitlint
+        run: |
+          npm install --no-save @commitlint/cli @commitlint/config-conventional
+
+      - name: Validate commits
+        run: |
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+            npx commitlint --from origin/${{ github.base_ref }} --to HEAD
+            else
+            npx commitlint --from HEAD~1 --to HEAD
+            fi
