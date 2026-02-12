@@ -7,5 +7,13 @@
     "shellcheck.executablePath": "shellcheck",
     "[markdown]": {
         "editor.wordWrap": "on"
-    }
+    },
+    "conventionalCommits.scopes": [
+        "main",
+        "infra",
+        "scripts",
+        "docs",
+        "ci",
+        "workflows"
+    ]
 }
