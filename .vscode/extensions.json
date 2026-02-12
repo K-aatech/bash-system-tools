@@ -3,6 +3,7 @@
         "timonwong.shellcheck",
         "editorconfig.editorconfig",
         "yzhang.markdown-all-in-one",
-        "eamodio.gitlens"
+        "eamodio.gitlens",
+        "vivaxy.vscode-conventional-commits",
     ]
 }
