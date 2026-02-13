@@ -1,0 +1,8 @@
+# Global ownership
+* @albertochungvz
+
+# GitHub configuration
+.github/ @albertochungvz
+
+# CI workflows
+.github/workflows/ @albertochungvz
