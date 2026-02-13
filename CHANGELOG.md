@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.7.3](https://github.com/K-aatech/bash-system-tools/compare/v1.7.2...v1.7.3) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **ci:** 🐛 align release-please workflow with oficial documentation ([#63](https://github.com/K-aatech/bash-system-tools/issues/63)) ([20b2aab](https://github.com/K-aatech/bash-system-tools/commit/20b2aab124891e7c92d9c03dcc2535a57375fb06))
+* **ci:** 🐛 fix component mapping for release-please v4 manifest ([#64](https://github.com/K-aatech/bash-system-tools/issues/64)) ([5f956df](https://github.com/K-aatech/bash-system-tools/commit/5f956dfa8a470dd12e4fbc367382e10bfeb3c0fd))
+* **release:** enforce PR title pattern for squash workflow ([#59](https://github.com/K-aatech/bash-system-tools/issues/59)) ([e0070b9](https://github.com/K-aatech/bash-system-tools/commit/e0070b9338dfd798b63998ebed93aace25f0cf9d))
+* **release:** migrate to manifest strategy to enable custom changelog sections ([#61](https://github.com/K-aatech/bash-system-tools/issues/61)) ([8d9eabb](https://github.com/K-aatech/bash-system-tools/commit/8d9eabbca856b7e2e89d23b77a9bad70a3760b1e))
+
+
+### ⚙️ CI/CD & Infra
+
+* enforce conventional commits with commitlint on pull requests ([#54](https://github.com/K-aatech/bash-system-tools/issues/54)) ([f7e8846](https://github.com/K-aatech/bash-system-tools/commit/f7e8846054564189d51060579552249253b51229))
+* **workflows:** upgrade to Node 24 LTS and validate PR title ([#58](https://github.com/K-aatech/bash-system-tools/issues/58)) ([caa3a8e](https://github.com/K-aatech/bash-system-tools/commit/caa3a8e9549aa63c731696cbf7ae79d17f03fbe6))
+
+
+### 📚 Documentation
+
+* define formal semantic versioning and release governance policy ([#55](https://github.com/K-aatech/bash-system-tools/issues/55)) ([2bad52e](https://github.com/K-aatech/bash-system-tools/commit/2bad52e80a750ba3ecc0b0d4c182f8d36d3d1f17))
+* **governance:** document squash-only and commit enforcement policy ([#62](https://github.com/K-aatech/bash-system-tools/issues/62)) ([bd72db1](https://github.com/K-aatech/bash-system-tools/commit/bd72db1af345c3d2817ea590435581365c1dec60))
+* **versioning:** align README with release workflow and update VSCode recommendations ([#57](https://github.com/K-aatech/bash-system-tools/issues/57)) ([3d652bc](https://github.com/K-aatech/bash-system-tools/commit/3d652bc22e88f6db72616a3178c70256dcbccb6e))
+
 ## [1.7.2](https://github.com/K-aatech/bash-system-tools/compare/v1.7.1...v1.7.2) (2026-02-12)
 
 
