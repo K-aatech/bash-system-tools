@@ -24,7 +24,7 @@ jobs:
 
       - name: Detect changed shell scripts
         id: changed
-        uses: tj-actions/changed-files@v42
+        uses: tj-actions/changed-files@v46
         with:
           files: |
             **/*.sh
