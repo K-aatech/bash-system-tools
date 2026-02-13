@@ -15,6 +15,7 @@
         "docs",
         "ci",
         "workflows",
-        "deps"
+        "deps",
+        "release"
     ]
 }
