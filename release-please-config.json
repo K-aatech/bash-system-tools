@@ -3,9 +3,9 @@
     "include-component-in-tag": false,
     "draft": false,
     "prerelease": false,
-    "pull-request-title-pattern": "^(feat|fix|ci|docs|refactor|perf|test)(\\(.+\\))?: .+$",
-    "changelog-types": [
-        { "type": "feat", "section": "🚀 Features", "hidden": false },
+    "include-v-in-tag": true,
+    "changelog-sections": [
+        { "type": "feat", "section": "✨ Features", "hidden": false },
         { "type": "fix", "section": "🐛 Bug Fixes", "hidden": false },
         { "type": "ci", "section": "⚙️ CI/CD & Infra", "hidden": false },
         { "type": "docs", "section": "📚 Documentation", "hidden": false },
