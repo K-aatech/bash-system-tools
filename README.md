@@ -100,6 +100,49 @@ Este proyecto sigue el estándar de ***[Semantic Versioning (SemVer)](https://se
 
 ---
 
+## 📜 Política de Lanzamiento y Gobernanza
+
+Este repositorio sigue un estricto modelo de gobernanza para garantizar un control de versiones predecible, trazable y con lanzamientos automatizados.
+
+### Convención de *Commit*
+
+Todos los cambios deben seguir la especificación de ***Conventional Commits***:
+
+- `feat:` para nuevas funcionalidades
+- `fix:` para correcciones de errores
+- `docs:` para cambios en la documentación
+- `refactor:` para reestructuración interna
+- `chore:` para tareas de mantenimiento
+
+Los títulos de las solicitudes de incorporación de cambios (*Pull Request* - PR) **deben** cumplir con este formato, ya que la automatización de lanzamientos deriva el control de versiones a los metadatos de los *commits*.
+
+### Estrategia de Fusión
+
+Este repositorio aplica **fusiones solo por *squash***.
+
+Cada solicitud de incorporación de cambios se fusiona como una única confirmación *squash* en `main`.
+El mensaje de confirmación resultante debe coincidir con el título de la solicitud de incorporación de cambios y seguir los *Conventional Commits*.
+
+Esto garantiza:
+
+- Historial lineal limpio
+- Generación determinista de registros de cambios
+- Cálculo preciso de versiones semánticas
+
+### Lanzamientos automatizados
+
+Las versiones se gestionan mediante `release-please` utilizando la **estrategia de manifiesto**.
+
+- El control de versiones se deriva de los *Conventional Commits*.
+- El PR de la versión se actualiza automáticamente cuando se incluyen nuevas confirmaciones en `main`.
+- `.release-please-manifest.json` es la única fuente de información veraz sobre el estado de la versión.
+
+No se permite el etiquetado manual ni los incrementos de versión manuales.
+
+Todos los incrementos de versión deben provenir de confirmaciones fusionadas que cumplan con las convenciones.
+
+---
+
 ## 🛡️ Descargo de responsabilidad (*Disclaimer*)
 
 Este software se proporciona "tal cual" bajo la Licencia **MIT**. Consulta el archivo [LICENSE](/LICENSE) para más detalles.  \
