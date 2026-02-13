@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.3](https://github.com/K-aatech/bash-system-tools/compare/v1.7.2...v1.7.3) (2026-02-13)
+
+
+### Bug Fixes
+
+* **release:** enforce PR title pattern for squash workflow ([#59](https://github.com/K-aatech/bash-system-tools/issues/59)) ([e0070b9](https://github.com/K-aatech/bash-system-tools/commit/e0070b9338dfd798b63998ebed93aace25f0cf9d))
+
 ## [1.7.2](https://github.com/K-aatech/bash-system-tools/compare/v1.7.1...v1.7.2) (2026-02-12)
 
 
