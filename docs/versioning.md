@@ -1,65 +1,76 @@
 # Política de Versiones
 
-Este repositorio sigue el **Versionado Semántico (SemVer)** e implementa ***Conventional Commits*** para garantizar versiones deterministas y automatizadas mediante `release-please`.
+Este repositorio adopta **Semantic Versioning (SemVer)** y utiliza **Conventional Commits** para garantizar versionado automático, determinista y reproducible mediante `release-please`.
+
+El modelo está diseñado bajo un enfoque **trunk-based** con gobernanza estricta sobre el historial y las etiquetas.
 
 ---
 
-## Estrategia de Versionado Semántico
+## Formato de Versión
 
-Formato de versión:
+Las versiones siguen el esquema:
 
-MAYOR.MENOR.PATCH
+MAJOR.MINOR.PATCH
 
 Ejemplo:
 
 4.2.0
 
-### MAYOR
+Las etiquetas se generan automáticamente con el prefijo `v`:
 
-Se incrementa cuando:
-- Se introduce un cambio incompatible con versiones anteriores.
-- Se eliminan o modifican indicadores de CLI.
-- Se rompe intencionalmente la compatibilidad con versiones anteriores.
-
-Debe declararse usando:
-
-`feat!: descripción`
-
-o
-
-`BREAKING CHANGE: descripción`
+v4.2.0
 
 ---
 
-### MENOR
-Se incrementa cuando:
-- Se añade nueva funcionalidad compatible con versiones anteriores.
+## Derivación de Versiones
+
+El incremento se determina exclusivamente por el tipo de commit fusionado en `main`.
+
+### MAJOR
+
+Se incrementa cuando se introduce un cambio incompatible.
+
+Debe declararse mediante:
+
+- `feat!: descripción`
+- o incluir `BREAKING CHANGE:` en el cuerpo del commit
+
+---
+
+### MINOR
+
+Se incrementa cuando se agrega funcionalidad compatible hacia atrás.
 
 Activado por:
 
-`feat: descripción`
+- `feat:`
 
 ---
 
 ### PATCH
-Se incrementa cuando:
-- Se corrige un error.
-- Se mejora rendimiento.
-- Se realizan ajustes internos de CI/CD o infraestructura.
-- Se refactoriza sin romper compatibilidad.
+
+Se incrementa cuando se corrigen errores o se realizan mejoras compatibles.
 
 Activado por:
 
-`fix:`
-`perf:`
-`refactor:`
-`ci:`
+- `fix:`
+- `perf:`
+- `refactor:`
+- `ci:` (cuando aplique)
+- `test:` (cuando aplique)
+
+> [!NOTE]
+> Los commits `docs:` y `chore:` no generan incremento de versión por sí mismos.
 
 ---
 
-## Tipos de *commits*
+## Tipos de Commit Permitidos
 
-Se permiten y aplican los siguientes tipos de *commits*:
+Los commits deben seguir el formato:
+
+`type(alcance opcional): descripción breve`
+
+Tipos admitidos:
 
 - feat
 - fix
@@ -70,54 +81,54 @@ Se permiten y aplican los siguientes tipos de *commits*:
 - test
 - chore
 
-Los *commits* **deben** seguir este formato:
-
-`type(alcance opcional): descripción breve`
-
 Ejemplos:
 
-`feat(cli): Add interactive mode`
-`fix: Handle empty input validation`
-`ci: Update version workflow`
-`docs: Clarify installation steps`
+`feat(cli): add interactive mode`
+`fix: handle empty input validation`
+`ci: update workflow permissions`
+`docs: clarify installation instructions`
 
 ---
 
-## Generación de *CHANGELOG*
+## Flujo de Liberación (Trunk-Based)
 
-`release-please` genera automáticamente el registro de cambios agrupado por secciones:
-
-- 🚀 Features
-- 🐛 Bug Fixes
-- ⚡ Performance
-- ♻️ Refactoring
-- ⚙️ CI/CD & Infra
-- 📚 Documentation
-- 🧪 Tests
+1. Toda mejora nace en una rama corta `feat/*` o `fix/*`.
+2. Se crea un Pull Request hacia `main`.
+3. `commitlint` valida la convención.
+4. La fusión se realiza exclusivamente mediante *squash merge*.
+5. `release-please` evalúa automáticamente el historial.
+6. Se genera o actualiza el Pull Request de versión.
+7. Al fusionarse el PR de versión:
+   - Se actualiza `CHANGELOG.md`.
+   - Se crea la etiqueta correspondiente.
+   - Se consolida el estado del manifiesto.
 
 > [!NOTE]
-> Las confirmaciones tipo `chore` se ocultan del *changelog*.
-
-
----
-
-## Flujo de trabajo trunk-based
-
-1. Todas las mejoras se desarrollan en ramas `feat/*` o `fix/*`.
-2. Se crean PR hacia `main`.
-3. `commitlint` valida la convención.
-4. `release-please` genera automáticamente la PR de *release*, etiquetas y actualización del *changelog*.
-5. Los *merges* en `main` generan las versiones estables.
-6. *Release Candidates* (RC) son manuales y opcionales; se etiquetan solo cuando se necesite *pre-release*.
-
-
-> [!CAUTION]
-> **No se permite la actualización manual de versiones.**
+> No existen ramas de desarrollo permanentes (`dev`, `release`, etc.).
 
 ---
 
-## Principios de gobernanza
+## Restricciones
 
-- Todos los commits deben pasar `commitlint`.
-- No se permiten push directo a `main`.
-- Los lanzamientos son totalmente automatizados y deterministas.
+**No está permitido:**
+
+- Crear etiquetas manualmente.
+- Modificar etiquetas existentes.
+- Incrementar versiones manualmente.
+- Realizar push directo a `main`.
+
+Las etiquetas `vMAJOR.MINOR.PATCH` están protegidas contra eliminación o modificación.
+
+---
+
+## Garantías del Modelo
+
+Este esquema proporciona:
+
+- Historial lineal y auditable.
+- Versionado semántico predecible.
+- Automatización sin intervención manual.
+- Integridad de etiquetas.
+- Reducción de error humano.
+
+El sistema de versionado forma parte integral de la gobernanza técnica del repositorio.
