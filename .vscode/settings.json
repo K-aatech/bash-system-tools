@@ -16,6 +16,7 @@
         "ci",
         "workflows",
         "deps",
-        "release"
+        "release",
+        "security"
     ]
 }
