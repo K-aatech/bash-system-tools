@@ -18,10 +18,10 @@ Ideal para administradores que usarán múltiples herramientas de la colección.
 ```bash
 git clone https://github.com/K-aatech/bash-system-tools.git
 cd bash-system-tools
-# Dar permisos de ejecución a todos los scripts y asegurar lectura de librerías
-sudo chmod +x */*.sh
 sudo ./audit/sys-audit-check.sh
 ```
+> [!NOTE]
+> Los permisos ejecutables ya están gestionados en el repositorio conforme a la política de gobernanza. No es necesario modificar permisos manualmente.
 
 ### Opción B: *Script* individual
 Ideal para auditorías rápidas en un solo servidor.
@@ -169,6 +169,37 @@ Este proyecto implementa controles técnicos adicionales para proteger la integr
 - Protección de etiquetas de versión (`v*`) como artefactos inmutables.
 
 Estos controles garantizan consistencia, trazabilidad y resistencia ante modificaciones no autorizadas.
+
+### Política de Scripts Ejecutables
+
+Para garantizar coherencia estructural y evitar deriva de permisos, se aplica la siguiente política:
+
+**Deben ser ejecutables:**
+- `/audit/*.sh`
+- `/hardening/*.sh`
+- `/maintenance/*.sh`
+- `/scripts/*.sh`
+- `/test/*.sh`
+
+**No deben ser ejecutables:**
+- `/lib/*.sh` (bibliotecas internas)
+
+### Validación Automatizada
+
+La política se valida mediante dos capas:
+
+1. *Pre-commit hook* versionado (`.githooks/pre-commit`)
+2. *Workflow* de CI obligatorio
+
+El *hook* valida:
+- *Bit* ejecutable correcto por directorio
+- *Shebang* obligatorio (`#!/usr/bin/env bash`)
+- Presencia de `set -euo pipefail` en *entrypoints*
+
+Si una validación falla:
+- El *commit* es rechazado localmente
+- El CI bloqueará la fusión
+- Esto elimina configuración manual y previene regresiones estructurales.
 
 ---
 
