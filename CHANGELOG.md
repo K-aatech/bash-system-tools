@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.7.4](https://github.com/K-aatech/bash-system-tools/compare/v1.7.3...v1.7.4) (2026-02-14)
+
+
+### 🐛 Bug Fixes
+
+* **ci:** 🔒️ update changed-files to v47 for security remediation ([#73](https://github.com/K-aatech/bash-system-tools/issues/73)) ([1ea781a](https://github.com/K-aatech/bash-system-tools/commit/1ea781a4a907d5b3a8f66b5951b0ce5e4ca2d3f0))
+
+
+### ⚙️ CI/CD & Infra
+
+* **deps:** ➕ enable Dependabot for GitHub Actions updates ([#67](https://github.com/K-aatech/bash-system-tools/issues/67)) ([8814704](https://github.com/K-aatech/bash-system-tools/commit/8814704d2909cbe62a837c41d43521e498d4cd3b))
+
+
+### 📚 Documentation
+
+* 📝 align repository documentation with trunk-based governance model ([#84](https://github.com/K-aatech/bash-system-tools/issues/84)) ([3928bf3](https://github.com/K-aatech/bash-system-tools/commit/3928bf381f3ff50820bb85dfba717ea9820e7322))
+* **audit:** 📝 update engineering manual for sys-audit-check.sh ([#86](https://github.com/K-aatech/bash-system-tools/issues/86)) ([df056d8](https://github.com/K-aatech/bash-system-tools/commit/df056d8517d8ff11acea2596e42c8c17f4b68bef))
+* **security:** 📝 add SECURITY.md with repository security policy ([#82](https://github.com/K-aatech/bash-system-tools/issues/82)) ([d427e5c](https://github.com/K-aatech/bash-system-tools/commit/d427e5c07d37bb2781be340f5f90cbee61df7f1f))
+
+
+### 🧹 Maintenance
+
+* **ci:** ♻️ refactor shellcheck to run only on changed scripts without external action ([#80](https://github.com/K-aatech/bash-system-tools/issues/80)) ([1c01561](https://github.com/K-aatech/bash-system-tools/commit/1c015613af4a377a8d50238dafc68deff050c6fc))
+* **ci:** 👷 harden release-please workflow (add concurrency and timeout) ([#81](https://github.com/K-aatech/bash-system-tools/issues/81)) ([b74d090](https://github.com/K-aatech/bash-system-tools/commit/b74d0902710348597e0adf91949f3fd86d236c10))
+* **ci:** 📌 harden commitlint workflow (pin deps, add concurrency and timeout) ([#79](https://github.com/K-aatech/bash-system-tools/issues/79)) ([b988f28](https://github.com/K-aatech/bash-system-tools/commit/b988f28198d31215d259b9d3a0e02ffa01141484))
+* **ci:** 📌 pin actions/checkout to v6.0.2 for reproducible builds ([#74](https://github.com/K-aatech/bash-system-tools/issues/74)) ([7840d57](https://github.com/K-aatech/bash-system-tools/commit/7840d578d9548dcbd54f4de7a640fac8625eedf7))
+* **ci:** 📌 pin actions/setup-node to v6.2.0 ([#75](https://github.com/K-aatech/bash-system-tools/issues/75)) ([042f328](https://github.com/K-aatech/bash-system-tools/commit/042f328052e3c3f68ade499e2d0353fbda0a93a2))
+* **ci:** 📌 pin GitHub Actions to commit SHA for supply-chain hardening ([#83](https://github.com/K-aatech/bash-system-tools/issues/83)) ([a630e68](https://github.com/K-aatech/bash-system-tools/commit/a630e6823d8ecd0ec2ad39594bb975d677557511))
+* **ci:** 📌 pin release-please-action to v4.4.0 ([#76](https://github.com/K-aatech/bash-system-tools/issues/76)) ([85a15cf](https://github.com/K-aatech/bash-system-tools/commit/85a15cf9d1383ab983e68299b3bbc3f1481ff7da))
+* **deps:** bump actions/checkout from 4 to 6 ([#70](https://github.com/K-aatech/bash-system-tools/issues/70)) ([4fa8dc7](https://github.com/K-aatech/bash-system-tools/commit/4fa8dc7d1ac59d1f4eb0c6040eb0c2f77323bad1))
+* **deps:** configure dependabot weekly schedule (patch tuesday) ([#78](https://github.com/K-aatech/bash-system-tools/issues/78)) ([c137310](https://github.com/K-aatech/bash-system-tools/commit/c137310a6049187dbf8c77bccb138620ed06e8d3))
+* enforce executable script policy with hook and CI validation ([#85](https://github.com/K-aatech/bash-system-tools/issues/85)) ([26a62dc](https://github.com/K-aatech/bash-system-tools/commit/26a62dca8453915f5881385558748dd4cdbaa522))
+* **governance:** add CODEOWNERS for repository oversight ([#66](https://github.com/K-aatech/bash-system-tools/issues/66)) ([4acc2f3](https://github.com/K-aatech/bash-system-tools/commit/4acc2f327b67a6519feab2e1b77ac435faa134c5))
+* **release:** 📝 include chore in changelog sections ([#77](https://github.com/K-aatech/bash-system-tools/issues/77)) ([ae63548](https://github.com/K-aatech/bash-system-tools/commit/ae63548520224faa53c4092972490fc2037bdff4))
+
 ## [1.7.3](https://github.com/K-aatech/bash-system-tools/compare/v1.7.2...v1.7.3) (2026-02-13)
 
 
