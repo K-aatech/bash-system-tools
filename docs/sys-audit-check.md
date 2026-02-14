@@ -6,95 +6,77 @@
 ![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
 
 ## 1. Descripción General
-*Utility* profesional de auditoría para la infraestructura de K'aatech. Diseñada para proporcionar visibilidad inmediata sobre la salud, seguridad y rendimiento de servidores Linux (optimizada para Ubuntu Server 22.04+).
+Utility profesional de auditoría para la infraestructura de **K'aatech**. Diseñada para proporcionar visibilidad inmediata sobre la salud, seguridad y rendimiento de servidores Linux, con un enfoque en la detección temprana de cuellos de botella y riesgos de seguridad (optimizada para entornos tipo Debian/Ubuntu).
 
+### **Capacidades Operativas:**
+* **Integridad Crítica:** Verificación de permisos y propiedad en archivos sensibles del sistema.
+* **Networking:** Mapeo de puertos en escucha mediante `ss` (Socket Statistics).
+* **CPU & I/O:** Monitoreo de *Load Average* y latencia de disco (*I/O Wait*).
+* **Gestión Térmica:** Detección de *Thermal Throttling* preventivo (vía `lm-sensors`).
+* **Logging Idempotente:** Sistema de rotación autónoma que evita la saturación de `/var/log`.
 
-### **Características principales:**
-* **Integridad de Archivos:** Verificación de permisos críticos en `/etc/passwd`, `/etc/shadow` y `/etc/sudoers`.
-* **Auditoría de Red:** Listado de puertos en escucha y *sockets* activos.
-* **Rendimiento de CPU:** Monitoreo de *Load Average* (1m, 5m, 15m), *I/O Wait* (latencia de disco) y top 3 de procesos.
-* **Monitoreo de memoria:** Calcula el porcentaje de uso de memoria RAM y alerta si excede el 80%.
-* **Auditoria de almacenamiento:** Escanea todas las particiones montadas y advierte si el uso es superior al 90%.
-* **Gestión de Procesos:** Identificación de procesos *Zombie* y rastreo de su proceso padre (PPID).
-* **Salud Térmica:** Lectura de sensores de temperatura y estado de ventiladores (requiere `lm-sensors`).
-* ***Logging* Persistente:** Sistema automático de rotación de *logs* (hasta 5 archivos por defecto).
+---
 
-## 2. Detalles Técnicos
-- **Lógica:** Operaciones de lectura y validación de estado del sistema con sistema de *logging* persistente y rotación automática.
-- **Umbrales (*Thresholds*):**
-  - **RAM:** >80% (*Warn*) - Basado en la necesidad de mantener *buffer* para picos de carga.
-  - **Disco:** >90% (*Critical*) - Margen de seguridad estándar para evitar bloqueos de escritura.
-  - **Temperatura CPU:** >75°C (*Alert*) - Límite preventivo antes de *thermal throttling*.
-  - ***I/O Wait*:** >5.0% - Indica latencia de disco impactando el rendimiento del CPU.
+## 2. Configuración y Umbrales (Thresholds)
+El script utiliza **Gobernanza de Variables** de Bash. Los valores por defecto pueden ser sobrescritos inyectando variables de entorno sin modificar el código fuente:
 
-## 3. Dependencias
-El *script* es minimalista y utiliza herramientas estándar de POSIX:
-- `bash` (v4.0+)
-- `awk`, `sed`, `grep`, `ps`, `df`, `free`, `uptime`, `top` (Coreutils)
-- `ss` (iproute2) para auditoría de red.
-- `lm-sensors` (Opcional, para datos térmicos). El *script* gestiona su instalación interactiva.
+| Variable | Valor Defecto | Nivel | Descripción |
+| :--- | :--- | :--- | :--- |
+| `THRESHOLD_RAM` | `80` | `WARN` | Porcentaje de uso de memoria física. |
+| `THRESHOLD_DISK` | `90` | `CRIT` | Uso de espacio en particiones montadas. |
+| `THRESHOLD_TEMP` | `75` | `WARN` | Grados Celsius antes de alerta térmica. |
+| `THRESHOLD_IOWAIT`| `5.0` | `WARN` | % de CPU esperando por E/S de disco. |
 
-## 4. Instalación y Uso
-El *script* requiere privilegios de **root** para rotación de *logs*, verificación de `/etc/shadow` e instalación de dependencias.
+---
 
-### Instalación en el Sistema (*Standalone*)
-Para desplegar el monitor como una herramienta global del sistema:
+## 3. Arquitectura de Salida (POSIX Streams)
+Para facilitar la integración con sistemas de monitoreo y agregadores de logs, el script separa estrictamente sus flujos de datos:
 
+* **Stdout (1):** Registros informativos, estado de salud OK y reportes de inventario.
+* **Stderr (2):** Todas las alertas `[WARN]` y fallos críticos `[CRIT]`.
+
+### Ejemplo de captura profesional:
 ```bash
-# 1. Descarga la versión estable
-sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/main/audit/sys-audit-check.sh
+# Separar logs informativos de alertas críticas en archivos distintos
+sudo ./sys-audit-check.sh > audit_inventory.log 2> audit_alerts.log
+```
 
-# 2. Asegurar propiedad y permisos restringidos (Solo Root)
-sudo chown root:root /usr/local/bin/sys-audit-check.sh
-sudo chmod 700 /usr/local/bin/sys-audit-check.sh
+## 4. Instalación y Despliegue
+El *script* debe residir en una ruta protegida. Solo el usuario `root` debe tener permisos de ejecución para garantizar la validez de la auditoría y acceso a archivos restringidos.
 
-# 3. Ejecución
+### Despliegue Estándar:
+1. Descarga:
+```bash
+sudo curl -L -o /usr/local/bin/sys-audit-check.sh [URL_REPOS_K_AATECH]
+```
+
+2. Hardening de permisos:
+```bash
+sudo chown root:root /usr/local/bin/sys-audit-check.sh && sudo chmod 700 /usr/local/bin/sys-audit-check.sh
+```
+
+3. Ejecución:
+```bash
 sudo sys-audit-check.sh
 ```
 
-> [!NOTE]
-> Al instalarlo en `/usr/local/bin`, puedes ejecutarlo simplemente llamando a `sys-audit-check.sh` desde cualquier ubicación si dicha ruta está en tu `$PATH`.
+## 5. Plan de Acción ante Incidentes (*Runbook*)
+### A. [CRIT] Security Risk: World-Writable Files
+Se detectó que un archivo crítico (ej. `/etc/shadow`) es escribible por usuarios no privilegiados.
 
-## 5. Resolución de Problemas (*Troubleshooting*)
-* **"*Thermal sensors not reporting data*":** Verifique si está en una VM o si necesita ejecutar `sudo sensors-detect`.
-* **"*Critical dependency missing*":** El *script* intentará identificar qué comando falta. Instale el paquete correspondiente (ej: `sysstat` para `iostat` o `lm-sensors`).
-* **Error de escritura en *Log*:** Asegúrese de que el *script* se ejecute con `sudo` para poder escribir y rotar en `/var/log`.
+- Acción: Ejecutar c`hmod 600 /etc/shadow` inmediatamente. Auditar el historial de comandos para identificar el origen del cambio de permisos.
 
-## 6. Recuperación ante Desastres (Plan de Acción)
-Si el *script* reporta niveles críticos:
+### B. [WARN] *High I/O Wait Detected*
+La CPU está perdiendo ciclos esperando al subsistema de almacenamiento.
 
-1. **[*CRITICAL*] *File Integrity*:** Riesgo de seguridad. Un archivo crítico (como `/etc/shadow`) tiene permisos de escritura universal. Ejecutar `sudo chmod 600 /etc/shadow` inmediatamente.
-2. **[*WARN*] *Zombie Processes*:** Identificar el proceso padre (PPID) reportado por el *script* y enviar señal `SIGHUP` o `SIGCHLD` para limpiar huérfanos.
-3. **[*WARN*] *High I/O Wait*:** El disco está saturado. Revisar procesos con alta escritura usando `iotop` o revisar salud de arreglos RAID.
+- Acción: Identificar procesos con alta carga de escritura usando `top` o `iotop`. Verificar salud de arreglos RAID o latencia en volúmenes de red (NFS/EBS).
 
-## 7. Limpieza y Logs
+### C. [WARN] *Zombie Processes*
+Procesos en estado Z. El *script* reportará el PID y el **PPID** (Parent PID).
 
-* ***Logs***: Se almacenan en `/var/log/kaatech_audit.log`.
-* **Rotación**: El *script* mantiene hasta 5 archivos históricos (`.1` a `.5`) de forma autónoma.
-* **Archivos Temporales**: El *script* no deja archivos temporales residuales; utiliza *pipes* y variables de entorno para procesar datos en memoria.
+- Acción: El proceso padre ha fallado en recolectar el estado de sus hijos. Enviar `SIGHUP` o `SIGCHLD` al PPID reportado. Si el problema persiste, considere reiniciar el servicio padre.
 
+## 6. Resolución de Problemas (*Troubleshooting*)
+- **"*Thermal sensors not reporting data*":** Común en entornos virtualizados donde el acceso al *hardware* físico está restringido. No afecta el resto de la auditoría.
 
-|Nivel|Significado|Acción Recomendada|
-|:----|:----|:----|
-|[*INFO*]|Operación normal o chequeo exitoso.|Ninguna.|
-|[*WARN*]|Umbral superado (RAM, Disco, Temp) o procesos *Zombie*.|Revisar carga del sistema o limpiar huérfanos.|
-|[*CRITICAL*]|Riesgo de seguridad (*World-writable files*) o falta de archivos.|Intervención inmediata. Corregir permisos de archivos críticos.|
-
-
-### 7.1 Gestión Avanzada de Salidas (*Streams*)
-El *script* separa los flujos de información siguiendo el estándar **POSIX**, lo que permite una integración profesional con sistemas de monitoreo:
-
-- **Stdout (Canal 1):** Mensajes `[INFO]` y `[ OK ]`.
-- **Stderr (Canal 2):** Mensajes `[WARN]` y `[CRIT]`.
-
-Debido a la arquitectura de la librería de logging, una ejecución puede generar tres fuentes de datos:
-1. **Archivo Maestro:** `$LOG_FILE` (definido en el script). Es persistente y siempre en texto plano.
-2. **Captura de Info:** `./sys-audit-check.sh > info.log`.
-3. **Captura de Alertas:** `./sys-audit-check.sh 2> alertas.log`.
-
-> [!IMPORTANT]
-> **Nota sobre Colores ANSI:** La librería detecta automáticamente si la salida es una terminal para aplicar colores. Si usted redirige **solo uno** de los flujos pero mantiene el otro en pantalla, es posible que los archivos `.log` resultantes contengan códigos de color ANSI. Para una captura totalmente limpia en archivos externos, se recomienda redirigir ambos flujos simultáneamente:
-
-```bash
-sudo ./audit/sys-audit-check.sh > audit_info.log 2> audit_alertas.log
-```
+- **Falla de dependencia:** El *script* intentará instalar `lm-sensors` si detecta una terminal interactiva (TTY). En entornos automatizados (CI/CD/Ansible), se recomienda pre-instalar el paquete.
