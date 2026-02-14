@@ -1,43 +1,52 @@
 name: Lint Bash
 
 permissions:
-  contents: read
+    contents: read
 
 on:
-  push:
-    branches-ignore:
-      - main
-  pull_request:
-    branches:
+    push:
+        branches-ignore:
+        - main
+    pull_request:
+        branches:
         - main
 
+concurrency:
+    group: shellcheck-${{ github.ref }}
+    cancel-in-progress: true
+
 jobs:
-  lint-shellcheck:
-    name: Runner ShellCheck
-    runs-on: ubuntu-latest
+    lint-shellcheck:
+        name: Runner ShellCheck
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
 
-    steps:
-      - name: Checkout PR code
-        uses: actions/checkout@v6.0.2
-        with:
-          fetch-depth: 0
+        steps:
+            - name: Checkout PR code
+              uses: actions/checkout@v6.0.2
+              with:
+                fetch-depth: 1
 
-      - name: Detect changed shell scripts
-        id: changed
-        uses: tj-actions/changed-files@v47.0.2
-        with:
-          files: |
-            **/*.sh
+            - name: Detect changed shell scripts
+              id: changed
+              uses: tj-actions/changed-files@v47.0.2
+              with:
+                files: |
+                    **/*.sh
 
-      - name: Skip ShellCheck if no shell scripts changed
-        if: steps.changed.outputs.any_changed != 'true'
-        run: echo "No shell scripts changed. ShellCheck skipped."
+            - name: Skip ShellCheck if no shell scripts changed
+              if: steps.changed.outputs.any_changed != 'true'
+              run: echo "No shell scripts changed. ShellCheck skipped."
 
-      - name: Run ShellCheck
-        if: steps.changed.outputs.any_changed == 'true'
-        uses: ludeeus/action-shellcheck@2.0.0
-        with:
-          version: v0.11.0
-          scandir: './'
-        env:
-          SHELLCHECK_OPTS: -e SC1091 # Ignora errores de "source" de archivos externos
+            - name: Run ShellCheck on changed files
+              if: steps.changed.outputs.any_changed == 'true'
+              #uses: ludeeus/action-shellcheck@2.0.0
+              #with:
+              #  version: v0.11.0
+              #  scandir: './'
+              run: |
+                echo "Running ShellCheck on:"
+                echo "${{ steps.changed.outputs.all_changed_files }}"
+                shellcheck -e SC1091 ${{ steps.changed.outputs.all_changed_files }}
+              #env:
+              #  SHELLCHECK_OPTS: -e SC1091 # Ignora errores de "source" de archivos externos
