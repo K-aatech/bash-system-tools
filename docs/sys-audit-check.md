@@ -1,8 +1,7 @@
 # Manual de Ingeniería: (`audit/sys-audit-check.sh`)
 
 ![Stable Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?exclude_prereleases&color=blue&label=stable)
-![Pre-release Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?include_prereleases&color=orange&label=dev-build)
-![Dev Build Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg?branch=dev)
+![CI Status](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg?branch=main)
 ![Platform](https://img.shields.io/badge/platform-Linux-steelblue)
 ![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
 
@@ -42,8 +41,8 @@ El *script* requiere privilegios de **root** para rotación de *logs*, verificac
 Para desplegar el monitor como una herramienta global del sistema:
 
 ```bash
-# 1. Descargar la versión estable v1.7.0
-sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/v1.7.0/audit/sys-audit-check.sh
+# 1. Descarga la versión estable
+sudo curl -L -o /usr/local/bin/sys-audit-check.sh https://raw.githubusercontent.com/K-aatech/bash-system-tools/main/audit/sys-audit-check.sh
 
 # 2. Asegurar propiedad y permisos restringidos (Solo Root)
 sudo chown root:root /usr/local/bin/sys-audit-check.sh
