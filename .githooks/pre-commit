@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ENTRYPOINT_DIRS="audit hardening maintenance scripts test"
+FAIL=0
+
+log() {
+    printf "%s\n" "$1"
+}
+
+is_staged() {
+    git diff --cached --name-only --diff-filter=ACM | grep -qx "$1"
+}
+
+validate_executable_policy() {
+    for file in $(git diff --cached --name-only --diff-filter=ACM | grep -E '\.sh$' || true); do
+
+        # Skip deleted files
+        [ -f "$file" ] || continue
+
+        # Check if file belongs to entrypoint directories
+        for dir in $ENTRYPOINT_DIRS; do
+            if [[ "$file" == "$dir/"* ]]; then
+                if [ ! -x "$file" ]; then
+                    log "❌ $file must be executable"
+                    FAIL=1
+                fi
+            fi
+        done
+
+        # Ensure lib scripts are NOT executable
+        if [[ "$file" == lib/* ]]; then
+            if [ -x "$file" ]; then
+                log "❌ $file in lib/ must NOT be executable"
+                FAIL=1
+            fi
+        fi
+    done
+}
+
+validate_shebang() {
+    for file in $(git diff --cached --name-only --diff-filter=ACM | grep -E '\.sh$' || true); do
+        [ -f "$file" ] || continue
+
+        if [[ "$file" == audit/* || "$file" == hardening/* || "$file" == maintenance/* || "$file" == scripts/* || "$file" == test/* ]]; then
+            if ! head -n 1 "$file" | grep -q "^#!/usr/bin/env bash"; then
+                log "❌ $file must use '#!/usr/bin/env bash'"
+                FAIL=1
+            fi
+        fi
+    done
+}
+
+validate_safe_mode() {
+    for file in $(git diff --cached --name-only --diff-filter=ACM | grep -E '\.sh$' || true); do
+        [ -f "$file" ] || continue
+
+        if [[ "$file" == audit/* || "$file" == hardening/* || "$file" == maintenance/* || "$file" == scripts/* || "$file" == test/* ]]; then
+            if ! grep -q "set -euo pipefail" "$file"; then
+                log "❌ $file must enable 'set -euo pipefail'"
+                FAIL=1
+            fi
+        fi
+    done
+}
+
+validate_executable_policy
+validate_shebang
+validate_safe_mode
+
+if [ "$FAIL" -ne 0 ]; then
+    log "⛔ Commit rejected due to governance violations"
+    exit 1
+fi
+
+log "✅ Pre-commit governance validation passed"

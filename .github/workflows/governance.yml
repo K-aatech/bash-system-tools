@@ -1,0 +1,62 @@
+name: Governance Enforcement
+
+on:
+    pull_request:
+        branches:
+        - main
+
+permissions:
+    contents: read
+
+jobs:
+    executable-policy:
+        name: Validate executable script policy
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Validate executable bits
+              run: |
+                FAIL=0
+
+                for file in $(git ls-files | grep -E '^(audit|hardening|maintenance|scripts|test)/.*\.sh$'); do
+                    if [ ! -x "$file" ]; then
+                        echo "❌ $file is not executable"
+                        FAIL=1
+                    fi
+                done
+
+                for file in $(git ls-files | grep -E '^lib/.*\.sh$'); do
+                    if [ -x "$file" ]; then
+                        echo "❌ $file in lib/ must NOT be executable"
+                        FAIL=1
+                    fi
+                done
+
+                if [ "$FAIL" -eq 1 ]; then
+                    echo "Governance validation failed"
+                    exit 1
+                fi
+
+                echo "✅ Executable policy validated"
+
+            - name: Validate shebang in executable scripts
+              run: |
+                FAIL=0
+
+                for file in $(git ls-files | grep -E '^(audit|hardening|maintenance|scripts|test)/.*\.sh$'); do
+                    if ! head -n 1 "$file" | grep -q "^#!/usr/bin/env bash"; then
+                        echo "❌ $file does not use required shebang"
+                        FAIL=1
+                    fi
+                done
+
+                if [ "$FAIL" -eq 1 ]; then
+                    echo "Shebang validation failed"
+                    exit 1
+                fi
+
+                echo "✅ Shebang policy validated"
+

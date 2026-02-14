@@ -132,3 +132,18 @@ Este esquema proporciona:
 - Reducción de error humano.
 
 El sistema de versionado forma parte integral de la gobernanza técnica del repositorio.
+
+## Gobernanza Estructural Complementaria
+
+El modelo de versionado está respaldado por controles técnicos que garantizan consistencia entre estructura y *releases*.
+
+Estos controles incluyen:
+- Validación automática de permisos ejecutables.
+- *Enforcements* de estructura mediante CI.
+- *Hooks* locales versionados.
+- Protección estricta de la rama `main`.
+
+La política de permisos forma parte del contrato estructural del repositorio.
+Los cambios que alteren esta política deben realizarse mediante PR y seguir *Conventional Commits*.
+
+Esto garantiza que cada versión publicada represente un estado técnicamente válido y estructuralmente coherente.
