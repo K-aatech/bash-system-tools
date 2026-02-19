@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.5](https://github.com/K-aatech/bash-system-tools/compare/v1.7.4...v1.7.5) (2026-02-19)
+
+
+### 🧹 Maintenance
+
+* **deps:** bump actions/checkout from 4 to 6 ([#87](https://github.com/K-aatech/bash-system-tools/issues/87)) ([4415bb6](https://github.com/K-aatech/bash-system-tools/commit/4415bb62cd11fce88852de196e9bbc44d9753d8b))
+
 ## [1.7.4](https://github.com/K-aatech/bash-system-tools/compare/v1.7.3...v1.7.4) (2026-02-14)
 
 
