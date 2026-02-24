@@ -1,42 +1,43 @@
 {
-  "editor.insertSpaces": true,
-  "editor.tabSize": 4, // Default para Bash/Otros
-  "editor.detectIndentation": false, // ¡IMPORTANTE! Evita que VS Code ignore el config
-  "files.eol": "\n", // Fuerza LF globalmente en VS Code
-  "editor.renderWhitespace": "boundary",
-  "files.insertFinalNewline": true,
-  "files.trimTrailingWhitespace": true,
-  "shellcheck.executablePath": "shellcheck",
-  "[markdown]": {
-    "editor.tabSize": 2,
-    "editor.wordWrap": "on",
-    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
-  },
-  "[json]": {
-    "editor.tabSize": 2,
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[yaml]": {
-    "editor.tabSize": 2,
-    "editor.defaultFormatter": "redhat.vscode-yaml"
-  },
-  "[shellscript]": {
-    "editor.tabSize": 2,
     "editor.insertSpaces": true,
-    "editor.formatOnSave": true,
-    "editor.defaultFormatter": "lumirelle.shell-format-rev"
-  },
-  "conventionalCommits.scopes": [
-    "governance",
-    "ci",
-    "docs",
-    "security",
-    "deps",
-    "release",
-    "workflows",
-    "structure",
-    "tooling",
-    "scripts"
-  ],
-  "markdown.validate.enabled": true
+    "editor.tabSize": 4, // Default para Bash/Otros
+    "editor.detectIndentation": false, // ¡IMPORTANTE! Evita que VS Code ignore el config
+    "files.eol": "\n", // Fuerza LF globalmente en VS Code
+    "editor.renderWhitespace": "boundary",
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    "shellcheck.executablePath": "shellcheck",
+    "[markdown]": {
+        "editor.tabSize": 2,
+        "editor.wordWrap": "on",
+        "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+    },
+    "[json]": {
+        "editor.tabSize": 2,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[yaml]": {
+        "editor.tabSize": 2,
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "[shellscript]": {
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "lumirelle.shell-format-rev"
+    },
+    "conventionalCommits.scopes": [
+        "governance",
+        "ci",
+        "docs",
+        "security",
+        "deps",
+        "release",
+        "workflows",
+        "structure",
+        "tooling",
+        "scripts",
+        "lib"
+    ],
+    "markdown.validate.enabled": true
 }
