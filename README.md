@@ -1,76 +1,52 @@
-# *Baseline Scripts* 🛡️
+# *Bash System Tools* (BST) | K'aatech
 
-[![Linting & Standards](https://github.com/K-aatech/baseline-scripts/actions/workflows/linting.yml/badge.svg)](https://github.com/K-aatech/baseline-scripts/actions/workflows/linting.yml)
-[![Secret Scanning (TruffleHog)](https://github.com/K-aatech/baseline-scripts/actions/workflows/secret-scanning.yml/badge.svg)](https://github.com/K-aatech/baseline-scripts/actions/workflows/secret-scanning.yml)
-[![CodeQL](https://github.com/K-aatech/baseline-scripts/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/K-aatech/baseline-scripts/actions/workflows/github-code-scanning/codeql)
-![License](https://img.shields.io/github/license/K-aatech/baseline-scripts)
+**Herramientas de grado empresarial para la gestión, seguridad y automatización de sistemas Linux.**
 
-Este es un **Repositorio Template** diseñado para ser la base de cualquier proyecto de automatización. Su objetivo es eliminar la fatiga de configuración inicial, garantizando que cada *script* nazca en un entorno con estándares de calidad y seguridad empresarial.
+[![Linting & Standards](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg)](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml)
+[![Secret Scanning (TruffleHog)](https://github.com/K-aatech/bash-system-tools/actions/workflows/secret-scanning.yml/badge.svg)](https://github.com/K-aatech/bash-system-tools/actions/workflows/secret-scanning.yml)
+[![CodeQL](https://github.com/K-aatech/bash-system-tools/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/K-aatech/bash-system-tools/actions/workflows/github-code-scanning/codeql)
+[![Quality](https://img.shields.io/badge/quality-K'aatech%20Baseline%20v1.1.0-60c1ec)](./docs/governance-baseline.md)
+![Bash Version](https://img.shields.io/badge/bash-%3E%3D4.2-blue)
+![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
 
-## 💎 Filosofía: *Security by Design & Default*
+## 📋 Descripción General
 
-Este repositorio no solo "soporta" seguridad; la impone.
+`bash-system-tools` es una *suite* de automatización diseñada para resolver desafíos operativos reales en entornos de misión crítica. Este repositorio no solo contiene *scripts*; representa un compromiso con la **Ingeniería de Software aplicada a Bash**, garantizando que cada herramienta sea segura, predecible y profesional.
 
-- **Zero Leak Tolerance**: Escaneo de secretos obligatorio en cada *commit* local y validación profunda en CI.
-- **Inmutabilidad**: Todas las *GitHub Actions* están pineadas mediante **Commit SHA** para prevenir ataques de cadena de suministro.
-- **Calidad Automatizada**: Uso estricto de **Conventional Commits** y validación de sintaxis en tiempo real.
-- **Governanza Rigurosa**: Reglas claras de contribución y revisión para mantener la integridad del código.
-- **Privacidad Respetada**: Validaciones locales para proteger la confidencialidad de los datos y secretos.
-- **Actualizaciones Proactivas**: Integración de *Dependabot* para mantener dependencias y acciones siempre actualizadas.
-- **Seguridad Integral**: Cobertura de seguridad que va desde el desarrollo local hasta la producción, sin puntos ciegos.
-- **Facilidad de Uso**: Configuración única y herramientas preinstaladas para que los desarrolladores se enfoquen en el código, no en la configuración.
-- **Cultura de Seguridad**: Fomentar una mentalidad de seguridad en cada contribución, haciendo que la seguridad sea parte del ADN del proyecto.
+A diferencia de *scripts* convencionales, estas herramientas están construidas sobre un **Contrato de Gobernanza Técnica**, lo que garantiza:
 
-## 🔍 Herramientas Incluidas
+* **Determinismo:** Comportamiento predecible en diversas distribuciones.
+* **Seguridad por Diseño:** Fallo seguro (`set -euo pipefail`) y escaneo activo de secretos.
+* **Gobernanza:** Código auditado y validado mediante análisis estático automatizado.
+* **Portabilidad:** Dependencias mínimas y cumplimiento de estándares *POSIX/Bash*.
 
-El ecosistema de calidad se basa en herramientas líderes que operan en dos niveles: preventivo (Local) y reactivo (CI).
+## 🏗️ Estructura y Módulos
 
-| Herramienta | Función | Implementación |
-| :--- | :--- | :--- |
-| **TruffleHog** | Detección de secretos y llaves | Local (*Hook*) + CI (*Workflow*) |
-| **ShellCheck** | Análisis estático de *scripts* Shell | Local (*Hook*) + CI (*Workflow*) |
-| **Conventional Commits** | Estándar de mensajes de *commit* | Local (*Hook*) + CI (*Workflow*) |
-| **Pre-commit** | Orquestador de validaciones locales | *Hooks* de *Git* |
-| **MarkdownLint** | Estilo de documentación | Local (*Hook*) + CI (*Workflow*) |
-| **Linter (YAML/JSON)** | Validación de sintaxis y esquemas | Local (*Hook*) + CI (*Workflow*) |
-| **Dependabot** | Actualización de dependencias | Automatizado semanal |
+El repositorio se organiza por dominios de responsabilidad para facilitar su uso en diferentes escenarios de consultoría y administración:
 
-## 🚀 Instalación y Uso Rápido
+* **`audit/`**: *Scripts* de inspección y diagnóstico. Generan reportes de estado sin alterar el sistema. Ideales para auditorías iniciales con clientes.
+* **`hardening/`**: Herramientas de reforzamiento de seguridad. Aplican políticas de "mínimo privilegio" y cierran brechas en la configuración del SO.
+* **`deploy/`**: (Implementaciones) *Scripts* destinados a la instalación, configuración inicial y despliegue de servicios o aplicaciones específicas.
+* **`maintenance/`**: Automatización de tareas recurrentes como rotación de *logs*, *backups* y limpieza de recursos.
+* **`scripts/`**: Utilidades generales de sistema y herramientas de soporte que asisten al SysAdmin en tareas cotidianas no categorizadas en los módulos anteriores.
 
-### 1. Preparar el Entorno
+## 🤝 Para SysAdmins y Colaboradores
 
-Este repositorio requiere herramientas específicas instaladas en su máquina (*Python, TruffleHog, ShellCheck*).
+Este proyecto es de código abierto para fomentar la transparencia y la mejora continua a través de la comunidad.
 
-👉 **Siga la guía obligatoria aquí:** [**Guía de Configuración del Entorno (Setup Checklist)**](./docs/setup-checklist.md)
+* **Para SysAdmins:** Cada herramienta incluye documentación técnica interna. Siéntete libre de usar y adaptar estas herramientas en tus flujos de trabajo.
+* **Para Colaboradores:** Valoramos las contribuciones que respeten nuestra gobernanza. Consulta las [Directrices de Contribución](./CONTRIBUTING.md) para conocer nuestro flujo *Trunk-based*.
 
-### 2. Inicializar el Proyecto
+  > [!NOTE]
+  > **Calidad:** Todas las herramientas pasan por validaciones estáticas con *ShellCheck* antes de ser publicadas.
 
-Una vez cumplidos los requisitos previos:
+## ⚖️ Estándares de Ingeniería
 
-1. Haga clic en **"Use this template"** en *GitHub*.
-2. Clone su nuevo repositorio y vincule los controles de calidad:
+Para nuestros clientes y socios, este repositorio sirve como evidencia de rigor técnico y prueba de nuestro compromiso con la excelencia:
 
-```bash
-git clone https://github.com/K-aatech/baseline-scripts.git
-cd baseline-scripts
-pre-commit install --install-hooks
-pre-commit install --hook-type commit-msg
-```
-
-## 🛠️ Capacidades de Normalización
-
-El repositorio incluye configuraciones predefinidas para garantizar la consistencia en cualquier editor:
-
-- **`.editorconfig`**: Normalización de fines de línea, indentación y codificación.
-- **`.vscode/settings.json`**: Configuración optimizada para *VS Code* y extensiones recomendadas para validación en tiempo real (ver [.vscode/extensions.json](.vscode/extensions.json)).
-- **Convenciones**: Validación de **Conventional Commits** para un historial legible.
-
-## 🫱🏻‍🫲🏾 Contribución y Gobernanza
-
-- **CODEOWNERS**: Revisión obligatoria para cambios en infraestructura de CI.
-- ***Templates***: Uso obligatorio de formularios estructurados para *bugs* y *features*.
-- **Estatutos**: Consulte [CONTRIBUTING.md](./CONTRIBUTING.md) para conocer las reglas de contribución y el flujo de trabajo.
+* **Versionado Semántico:** Publicaciones claras y deterministas mediante `release-please`.
+* **Calidad de Código:** Cumplimiento estricto del [Bash Engineering Style Guide](./docs/bash-style-guide.md).
+* **Transparencia:** Historial de cambios auditable basado en *Conventional Commits*.
 
 ---
-
-Arquitecto del Proyecto: [@albertochungvz](https://github.com/albertochungvz)
+Desarrollado con rigor por el equipo de [**K'aatech**](https://kaatech.mx).

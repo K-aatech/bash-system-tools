@@ -3,7 +3,7 @@
   "packages": {
     ".": {
       "release-type": "simple",
-      "package-name": "baseline-scripts",
+      "package-name": "bash-system-tools",
       "include-component-in-tag": false,
       "draft": false,
       "prerelease": false
