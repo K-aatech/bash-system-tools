@@ -1,0 +1,46 @@
+name: Commitlint
+
+permissions:
+    contents: read
+
+on:
+    pull_request:
+        branches:
+            - main
+
+concurrency:
+    group: commitlint-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    commitlint:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
+              with:
+                fetch-depth: 0
+
+            - name: Use Node
+              uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 #v6.2.0
+              with:
+                node-version: '24.13.1' #Latest Node.js LTS version on 2026-02
+
+            - name: Install commitlint
+              run: |
+                npm install --no-save @commitlint/cli@20.4.1 @commitlint/config-conventional@20.4.1
+
+            - name: Validate commits
+              run: |
+                if [ "${{ github.event_name }}" = "pull_request" ]; then
+                    npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.sha }}
+                else
+                    npx commitlint --from HEAD~1 --to HEAD
+                fi
+
+            - name: Validate PR title
+              if: github.event_name == 'pull_request'
+              run: |
+                echo "${{ github.event.pull_request.title }}" | npx commitlint

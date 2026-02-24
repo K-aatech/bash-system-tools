@@ -1,0 +1,32 @@
+name: "🐞 Reporte de Bug"
+description: "Informa de un error en los scripts o la CI para que podamos arreglarlo."
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Gracias por reportar este problema.
+        Por favor, completa la siguiente información para ayudarnos a identificar la causa.
+  - type: textarea
+    id: bug_description
+    attributes:
+      label: "¿Qué está fallando?"
+      description: "Describe de forma clara el comportamiento inesperado."
+      placeholder: "Ej: El script de backup falla cuando la ruta tiene espacios..."
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Logs y Errores"
+      description: "Pega aquí la salida de la terminal o el error de GitHub Actions."
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: "Validaciones previas"
+      options:
+        - label: "¿El error persiste después de correr `pre-commit run --all-files`?"
+          required: true
+        - label: "¿Estás usando la versión más reciente del repo?"
+          required: true

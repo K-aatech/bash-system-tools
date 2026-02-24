@@ -1,0 +1,16 @@
+# 1. Declare default behavior (Normalization to LF)
+* text=auto eol=lf
+
+# 2. Explicitly enforce LF in critical configuration files
+*.sh text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+.editorconfig text eol=lf
+.gitattributes text eol=lf
+
+# 3. Prevent binary files from being corrupted by Git
+*.png binary
+*.jpg binary
+*.ico binary

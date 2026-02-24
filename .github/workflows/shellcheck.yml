@@ -1,0 +1,45 @@
+name: ShellCheck
+
+permissions:
+    contents: read
+
+on:
+    pull_request:
+        branches:
+        - main
+
+concurrency:
+    group: shellcheck-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    shellcheck:
+        name: Static Analysis (ShellCheck)
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+
+        steps:
+            - name: Checkout PR code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
+              with:
+                fetch-depth: 1
+
+            - name: Detect changed shell scripts
+              id: changed
+              uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a #v47.0.4
+              with:
+                files: |
+                    **/*.sh
+
+            - name: Skip ShellCheck if no shell scripts changed
+              if: steps.changed.outputs.any_changed != 'true'
+              run: echo "No shell scripts changed. ShellCheck skipped."
+
+            - name: Run ShellCheck on changed files
+              if: steps.changed.outputs.any_changed == 'true'
+              uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38
+              with:
+                version: v0.11.0
+                scandir: './'
+              env:
+                SHELLCHECK_OPTS: -e SC1091 # Ignora errores de "source" de archivos externos

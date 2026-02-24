@@ -1,0 +1,6 @@
+# Global owners
+* @albertochungvz
+
+# CI/CD specialists
+.github/workflows/    @albertochungvz
+.pre-commit-config.yaml @albertochungvz

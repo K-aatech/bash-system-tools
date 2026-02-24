@@ -1,0 +1,28 @@
+name: Governance & Structure
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: governance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-structure:
+    name: Structural Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run Structural Validation Script
+        id: validate-structure
+        timeout-minutes: 2
+        run: |
+          chmod +x scripts/validate-structure.sh
+          ./scripts/validate-structure.sh

@@ -1,0 +1,14 @@
+# Markdownlint configuration for the Template Repository
+default: true
+
+# MD013/line-length: Disabled.
+# Forcing 80 characters in Markdown breaks tables and long links.
+MD013: false
+
+# MD033/no-inline-html: Disabled.
+# We need it for GitHub badges and to center images in the README.MD033: false
+MD033: false
+
+# MD041/first-line-h1: Disabled.
+# Useful if the README starts with a logo/image before the main title.
+MD041: false

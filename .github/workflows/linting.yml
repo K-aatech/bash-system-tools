@@ -1,0 +1,36 @@
+name: Linting & Standards
+
+permissions:
+    contents: read
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pre-commit:
+    name: Run Pre-commit Hooks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.14' #Latest Python version on 2026-02
+
+      - name: Install and Run Pre-commit
+        run: |
+          pip install pre-commit==4.1.0
+          SKIP=trufflehog pre-commit run --all-files --show-diff-on-failure

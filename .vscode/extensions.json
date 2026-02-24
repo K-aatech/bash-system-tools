@@ -1,0 +1,18 @@
+{
+  "recommendations": [
+    // --- GOBERNANZA Y CUMPLIMIENTO (Obligatorios para pasar la CI) ---
+    "davidanson.vscode-markdownlint", // Valida reglas de estilo en MD. Evita fallos en el hook 'markdownlint'.
+    "redhat.vscode-yaml", // Valida esquemas de GitHub Actions y Workflows.
+    "timonwong.shellcheck", // Análisis estático para scripts .sh. Evita fallos en el flujo de CI 'shellcheck'.
+
+    // --- CALIDAD DE CÓDIGO Y FORMATO ---
+    "editorconfig.editorconfig", // Mantiene consistencia de indentación y saltos de línea entre SOs.
+    "esbenp.prettier-vscode", // Formateador estándar para JSON y Markdown. Garantiza paridad con los hooks.
+    "lumirelle.shell-format-rev", // Formateador específico para scripts Bash. Complementa a Prettier y asegura formato uniforme.
+
+    // --- PRODUCTIVIDAD Y FLUJO DE TRABAJO ---
+    "yzhang.markdown-all-in-one", // Facilita la escritura ágil de documentación (Tablas, TOC, Previsualización).
+    "vivaxy.vscode-conventional-commits", // Guía la creación de mensajes de commit bajo el estándar Conventional Commits.
+    "github.vscode-github-actions" // Soporte integral para la gestión y depuración de Workflows de GitHub.
+  ]
+}
