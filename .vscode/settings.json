@@ -37,7 +37,8 @@
         "structure",
         "tooling",
         "scripts",
-        "lib"
+        "lib",
+        "audit"
     ],
     "markdown.validate.enabled": true
 }
