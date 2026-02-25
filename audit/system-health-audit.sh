@@ -20,7 +20,7 @@ THRESHOLD_RAM="${THRESHOLD_RAM:-80}"
 THRESHOLD_TEMP="${THRESHOLD_TEMP:-75}"
 THRESHOLD_IOWAIT="${THRESHOLD_IOWAIT:-5.0}"
 # Core dependencies for audit functionality (GBSG compliant)
-readonly CORE_DEPS=(awk sed grep df free uptime stat vmstat ps)
+readonly CORE_DEPS=(awk sed grep df free uptime stat vmstat ps ip ss ping)
 # Optional dependencies for enhanced reporting (GBSG compliant)
 readonly OPTIONAL_DEPS=(sensors bc)
 
@@ -30,11 +30,14 @@ local_script_dir="$(dirname "$(readlink -f "$0")")" || exit 1
 readonly SCRIPT_DIR="${local_script_dir}"
 LIB_LOGGING="${SCRIPT_DIR}/../lib/logging.sh"
 LIB_UTILS="${SCRIPT_DIR}/../lib/sys-utils.sh"
+LIB_NET="${SCRIPT_DIR}/../lib/net-utils.sh"
 
 # shellcheck source=../lib/logging.sh
 [[ -f "${LIB_LOGGING}" ]] && source "${LIB_LOGGING}"
 # shellcheck source=../lib/sys-utils.sh
 [[ -f "${LIB_UTILS}" ]] && source "${LIB_UTILS}"
+# shellcheck source=../lib/net-utils.sh
+[[ -f "${LIB_NET}" ]] && source "${LIB_NET}"
 
 # --- Core Functions ---
 audit_thermal_status() {
@@ -43,7 +46,7 @@ audit_thermal_status() {
   local max_temp
   log_event "INFO" "Checking thermal status..."
   # Extracts the highest temperature from all adapters
-  max_temp=$(sensors -A 2> /dev/null | grep -i 'Core' | awk '{print $3}' | sed 's/+//;s/°C//' | sort -nr | head -n1 | cut -d. -f1)
+  max_temp=$(sensors -A 2> /dev/null | grep -oP '\+\d+\.\d+°C' | sed 's/[+°C]//g' | sort -nr | head -n1 | cut -d. -f1)
 
   if [[ -n "${max_temp}" ]]; then
     log_event "INFO" "Max CPU Temperature: ${max_temp}°C"
@@ -150,6 +153,16 @@ main() {
   audit_zombie_processes
   audit_memory_usage
   audit_disk_health
+
+  # 7. Network Audits (Delegated to net-utils)
+  log_event "INFO" "--- NETWORK AUDIT ---"
+  get_network_context || true
+  get_dns_resolvers || true
+  get_listening_ports
+
+  if check_internet_connectivity; then
+    check_multi_cloud_latency
+  fi
 
   log_event "INFO" "-------------------------------------------------"
   log_event "OK" "Audit complete."
