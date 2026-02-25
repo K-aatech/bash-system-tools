@@ -29,75 +29,82 @@ fi
 
 # Global variables with default values ​​(Governance)
 # Readonly is used for post-initialization constants
-LOG_FILE="${LOG_FILE:-/var/log/kaatech_report.log}"
+LOG_FILE="${LOG_FILE:-/tmp/kaatech_report.log}"
 MAX_LOG_FILES="${MAX_LOG_FILES:-5}"
 
 log_event() {
   local level="${1:-INFO}"
   local message="${2:-No message provided}"
-  local timestamp
-  local color
-  local label
+  local timestamp color label visual_signaling log_dir
 
   timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
-  case "${level^^}" in # Convert to uppercase for robustness
+  case "${level^^}" in
     "INFO")
       color="${CLR_BLUE}"
       label="[INFO]"
+      visual_signaling="ℹ️ "
       ;;
     "OK")
       color="${CLR_GREEN}"
       label="[ OK ]"
+      visual_signaling="✅ "
       ;;
     "WARN")
       color="${CLR_YELLOW}"
       label="[WARN]"
+      visual_signaling="⚠️ "
       ;;
     "CRIT")
       color="${CLR_RED}"
       label="[CRIT]"
+      visual_signaling="🚨 "
       ;;
     *)
       color="${CLR_RESET}"
       label="[LOG ]"
+      visual_signaling="📝 "
       ;;
   esac
 
-  # All logging output goes to stderr (>&2) so as not to interfere with data pipes
-  printf "%b%s%b %b%s - %s%b\n" \
-    "${color}" "${label}" "${CLR_OFF}" \
+  # Fallback: Disable emoji if not in terminal to avoid encoding issues in files/pipes
+  [[ ${USE_EMOJI} -eq 0 ]] && visual_signaling=""
+
+  # Output to stderr
+  printf "%b%s%s%b %b%s - %s%b\n" \
+    "${color}" "${visual_signaling}" "${label}" "${CLR_OFF}" \
     "${CLR_RESET}" "${timestamp}" "${message}" "${CLR_OFF}" >&2
 
-  # Writing to file (Idempotence)
-  local log_dir
+  # Persistence with idempotency check
   log_dir=$(dirname "${LOG_FILE}")
-  if [[ -w "${LOG_FILE}" || -w "${log_dir}" ]]; then
-    printf "[%s] %s - %s\n" "${level}" "${timestamp}" "${message}" >> "${LOG_FILE}" 2> /dev/null || true
+  if [[ -w "${LOG_FILE}" || (! -f "${LOG_FILE}" && -w "${log_dir}") ]]; then
+    printf "[%s] %s - %s\n" "${level^^}" "${timestamp}" "${message}" >> "${LOG_FILE}" 2> /dev/null || true
   fi
 }
 
 rotate_logs() {
-  local log_dir
+  local log_dir i next
   log_dir=$(dirname "${LOG_FILE}")
 
-  # Validation of permissions and existence
-  if [[ ! -f "${LOG_FILE}" ]]; then
-    touch "${LOG_FILE}" 2> /dev/null || return 0
-  fi
+  [[ ! -w "${log_dir}" ]] && return 0
+  [[ ! -f "${LOG_FILE}" ]] && return 0
 
-  if [[ ! -w "${log_dir}" ]]; then
-    return 0
-  fi
+  # Delete the oldest log if it exists to prevent overflow
+  [[ -f "${LOG_FILE}.${MAX_LOG_FILES}" ]] && rm -f "${LOG_FILE}.${MAX_LOG_FILES}"
 
-  # Manual rotation (Deterministic)
-  local i
-  for i in $(seq "$((MAX_LOG_FILES - 1))" -1 1); do
+  # Manual deterministic rotation
+  for ((i = MAX_LOG_FILES - 1; i >= 1; i--)); do
+    next=$((i + 1))
     if [[ -f "${LOG_FILE}.${i}" ]]; then
-      mv "${LOG_FILE}.${i}" "${LOG_FILE}.$((i + 1))"
+      mv -f "${LOG_FILE}.${i}" "${LOG_FILE}.${next}"
     fi
   done
 
-  mv "${LOG_FILE}" "${LOG_FILE}.1"
-  touch "${LOG_FILE}"
+  # Atomically move current to .1
+  if [[ -f "${LOG_FILE}" ]]; then
+    mv -f "${LOG_FILE}" "${LOG_FILE}.1"
+  fi
+
+  # Create new log with secure permissions from birth
+  (umask 027 && touch "${LOG_FILE}")
 }
