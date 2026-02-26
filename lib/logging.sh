@@ -1,6 +1,7 @@
-#!/usr/bin/env bash
+# shellcheck shell=bash
 # ==============================================================================
 # Script Name: logging.sh
+# This file is intended to be sourced, not executed directly.
 # Description: K'aatech Bash System Tools - Core Logging Library
 # Global Vars: LOG_FILE, MAX_LOG_FILES, CLR_*
 # ==============================================================================
@@ -18,6 +19,7 @@ if [[ -t 2 ]]; then
   readonly CLR_RED='\033[38;2;153;27;27m'
   readonly CLR_YELLOW='\033[38;2;251;202;4m'
   readonly CLR_OFF='\033[0m'
+  readonly USE_VISUAL=1
 else
   readonly CLR_RESET=''
   readonly CLR_BLUE=''
@@ -25,6 +27,7 @@ else
   readonly CLR_RED=''
   readonly CLR_YELLOW=''
   readonly CLR_OFF=''
+  readonly USE_VISUAL=0
 fi
 
 # Global variables with default values ​​(Governance)
@@ -43,17 +46,17 @@ log_event() {
     "INFO")
       color="${CLR_BLUE}"
       label="[INFO]"
-      visual_signaling="ℹ️ "
+      visual_signaling="ℹ️  "
       ;;
     "OK")
       color="${CLR_GREEN}"
       label="[ OK ]"
-      visual_signaling="✅ "
+      visual_signaling="✅  "
       ;;
     "WARN")
       color="${CLR_YELLOW}"
       label="[WARN]"
-      visual_signaling="⚠️ "
+      visual_signaling="⚠️  "
       ;;
     "CRIT")
       color="${CLR_RED}"
@@ -68,17 +71,19 @@ log_event() {
   esac
 
   # Fallback: Disable emoji if not in terminal to avoid encoding issues in files/pipes
-  [[ ${USE_EMOJI} -eq 0 ]] && visual_signaling=""
+  [[ ${USE_VISUAL} -eq 0 ]] && visual_signaling=""
 
   # Output to stderr
-  printf "%b%s%s%b %b%s - %s%b\n" \
+  printf "%b%s%s%b %b%s - %b%b\n" \
     "${color}" "${visual_signaling}" "${label}" "${CLR_OFF}" \
     "${CLR_RESET}" "${timestamp}" "${message}" "${CLR_OFF}" >&2
 
-  # Persistence with idempotency check
-  log_dir=$(dirname "${LOG_FILE}")
+  # Persistence (We cleaned ANSI escape codes for the flat log file)
   if [[ -w "${LOG_FILE}" || (! -f "${LOG_FILE}" && -w "${log_dir}") ]]; then
-    printf "[%s] %s - %s\n" "${level^^}" "${timestamp}" "${message}" >> "${LOG_FILE}" 2> /dev/null || true
+    # shellcheck disable=SC2001
+    local clean_msg
+    clean_msg=$(echo -e "${message}" | sed 's/\x1b\[[0-9;]*m//g')
+    printf "[%s] %s - %s\n" "${level^^}" "${timestamp}" "${clean_msg}" >> "${LOG_FILE}" 2> /dev/null || true
   fi
 }
 
