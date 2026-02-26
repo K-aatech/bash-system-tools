@@ -1,6 +1,7 @@
-#!/usr/bin/env bash
+# shellcheck shell=bash
 # ==============================================================================
 # Script Name: sys-utils.sh
+# This file is intended to be sourced, not executed directly.
 # Description: Multi-distro support for dependencies and security checks. (GBSG compliant).
 # Standards: GBSG Compliant | K'aatech Baseline v1.1.0
 # ==============================================================================

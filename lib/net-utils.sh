@@ -1,6 +1,7 @@
-#!/usr/bin/env bash
+# shellcheck shell=bash
 # ==============================================================================
 # Script Name:  net-utils.sh
+# This file is intended to be sourced, not executed directly.
 # Description:  K'aatech Network Audit Library - "Fierro-to-Cloud" Perspective.
 # Standards:    GBSG Compliant | K'aatech Baseline v1.1.0
 # ==============================================================================

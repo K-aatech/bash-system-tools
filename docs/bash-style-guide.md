@@ -7,23 +7,26 @@ El cumplimiento de esta guía es obligatorio para garantizar confiabilidad, port
 ## 1. Requisitos de Ejecución
 
 - ***Shell* mínimo requerido:** Bash >= 4.2
-- ***Shebang* obligatorio:**
+- **Scripts Ejecutables:** Todos los *scripts* destinados a ejecución directa deben iniciar con el siguiente preámbulo para garantizar un comportamiento determinista y seguro:
 
     ```bash
     #!/usr/bin/env bash
-    ```
-
-- **Modo Seguro (Obligatorio):**
-
-    ```bash
     set -euo pipefail
+    IFS=$'\n\t'
     ```
 
-Significado:
+  Significado:
 
-- `-e` → Termina la ejecución ante cualquier error.
-- `-u` → Falla ante variables no definidas.
-- `-o pipefail` → Detecta fallas en *pipelines*.
+  - `set -e` → Falla inmediatamente si un comando retorna un error.
+  - `set -u` → Falla si se intenta expandir una variable no definida.
+  - `set -o pipefail` → Evita que errores en un *pipe* se oculten si el último comando tiene éxito.
+  - `IFS=$'\n\t'` → Protege contra la división errónea de palabras en archivos o *strings* con espacios.
+
+- **Librerías (archivos en `lib/`):** **PROHIBIDO** el uso de *shebang*. En su lugar, es obligatorio incluir la directiva de ShellCheck para garantizar la validación estática sin otorgar permisos de ejecución:
+
+  ```bash
+  # shellcheck shell=bash
+  ```
 
 Cualquier excepción a esta regla debe estar documentada explícitamente en el encabezado del *script*.
 
