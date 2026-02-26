@@ -1,5 +1,6 @@
+# --- K'AATECH GOVERNANCE HOOKS ---
 repos:
-  # --- LOCAL / BINARY HOOKS ---
+  # --- SECURITY ALWAYS FIRST ---
   - repo: local
     hooks:
       - id: trufflehog
@@ -10,6 +11,36 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
+  # --- PERMISSIONS GOVERNANCE (Fixers) ---
+  # --- BASH EXECUTABLES HOOK ---
+  - repo: local
+    hooks:
+      - id: fix-executables
+        name: Fix script permissions (Governance)
+        # We use logic that detects whether to use `git update-index` or `chmod` based on the environment, ensuring compatibility across Windows and Linux.       #
+        entry: bash -c '
+          if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+          git ls-files "scripts/*" "audit/*" "hardening/*" "maintenance/*" "deploy/*" "test/unit/*" | xargs -I {} git update-index --chmod=+x {};
+          else
+          chmod +x scripts/* audit/* hardening/* maintenance/* deploy/* test/unit/* 2>/dev/null || true;
+          fi'
+        language: system
+        stages: [pre-commit]
+        pass_filenames: false
+
+      - id: remove-executables
+        name: Remove library permissions (Governance)
+        entry: bash -c '
+          if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+          git ls-files "lib/*" "test/lib/*" "docs/*.md" | xargs -I {} git update-index --chmod=-x {};
+          else
+          chmod -x lib/* test/lib/* docs/*.md 2>/dev/null || true;
+          fi'
+        language: system
+        stages: [pre-commit]
+        pass_filenames: false
+
+  # --- SYNTAX AND UTILITY: Format validation ---
   # --- JSON, YAML AND UTILITY HOOKS ---
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
@@ -22,13 +53,27 @@ repos:
       - id: trailing-whitespace # Remove unnecessary spaces at the end of the line
       - id: mixed-line-ending # Final reinforcement to secure LF line endings
         args: ["--fix=lf"]
+      - id: check-executables-have-shebangs
+        name: Integrity - Ensure shebang in executables
+      - id: check-shebang-scripts-are-executable
+        name: Integrity - Ensure scripts with shebang are +x
+        # Excluimos archivos que no son scripts pero podrían tener contenido similar
+        exclude: ^(docs/|lib/|test/lib/|.*\.md)$
 
+  # --- CODE QUALITY (Linters) ---
   # --- MARKDOWN HOOK ---
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: 76b3d32d3f4b965e1d6425253c59407420ae2c43 # v0.47.0
     hooks:
       - id: markdownlint
         args: ["--config", ".markdownlint.yaml", "--fix"]
+
+  # --- BASH LINT HOOK ---
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: 745eface02aef23e168a8afb6b5737818efbea95 # v0.11.0.1
+    hooks:
+      - id: shellcheck
+        args: ["--severity=warning"] # Optional: to be strict as the CI
 
   # --- CONVENTIONAL COMMITS HOOK ---
   - repo: https://github.com/compilerla/conventional-pre-commit
@@ -50,24 +95,3 @@ repos:
             "chore",
             "revert",
           ]
-
-  # --- BASH LINT HOOK ---
-  - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: 745eface02aef23e168a8afb6b5737818efbea95 # v0.11.0.1
-    hooks:
-      - id: shellcheck
-        args: ["--severity=warning"] # Optional: to be strict as the CI
-
-  # --- BASH EXECUTABLES HOOK ---
-  - repo: local
-    hooks:
-      - id: fix-executables
-        name: Fix script permissions
-        entry: bash -c 'chmod +x scripts/* audit/* hardening/* maintenance/* deploy/* test/unit/* 2>/dev/null || true'
-        language: system
-        stages: [pre-commit]
-      - id: remove-executables
-        name: Remove library permissions
-        entry: bash -c 'chmod -x lib/* test/lib/ docs/*.md 2>/dev/null || true'
-        language: system
-        stages: [pre-commit]
