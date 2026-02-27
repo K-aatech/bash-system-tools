@@ -12,8 +12,8 @@ IFS=$'\n\t'
 
 # --- Environment & Globals ---
 # x-release-please-version
-VERSION="0.1.0"
-readonly VERSION
+SUITE_VERSION="0.1.0"
+readonly SUITE_VERSION
 
 THRESHOLD_DISK="${THRESHOLD_DISK:-90}"
 THRESHOLD_RAM="${THRESHOLD_RAM:-80}"
@@ -66,13 +66,13 @@ audit_cpu_performance() {
   log_event "INFO" "Auditing CPU performance..."
 
   # Capturing the three load averages (Resilient Parsing)
-  read -r load_1m load_5m load_15m < <(uptime | sed 's/.*load average: //' | tr -d ',')
+  IFS=' ' read -r load_1m load_5m load_15m < <(uptime | sed 's/.*load average: //' | tr -d ',')
   log_event "INFO" "CPU Load Average: [1m: ${load_1m}] [5m: ${load_5m}] [15m: ${load_15m}]"
 
   iowait=$(vmstat 1 2 | tail -1 | awk '{print $16}')
   log_event "INFO" "CPU I/O Wait: ${iowait}%"
 
-  if (($(echo "${iowait} > ${THRESHOLD_IOWAIT}" | bc -l 2> /dev/null || awk "BEGIN {exit !(${iowait} > ${THRESHOLD_IOWAIT})}"))); then
+  if awk "BEGIN {exit !($iowait > $THRESHOLD_IOWAIT)}"; then
     log_event "WARN" "High I/O Wait detected!"
   fi
 }
@@ -115,19 +115,18 @@ audit_memory_usage() {
 }
 
 audit_disk_health() {
-  local pcent target usage
+  local target usage
   local -i found_issue=0
 
   log_event "INFO" "Scanning disk partitions..."
-  # Process substitution is safer than piping to while for variable scope
-  # We use a comma as a delimiter to avoid problems with the global IFS and folder names with spaces.
-  while IFS=',' read -r pcent target; do
-    usage=${pcent%\%}
-    if [[ "${usage}" -ge "${THRESHOLD_DISK}" ]]; then
-      log_event "WARN" "Disk space critical: ${usage}% on ${target}"
+  while read -r usage target; do
+    local p_val="${usage%\%}"
+
+    if [[ "$p_val" -ge "$THRESHOLD_DISK" ]]; then
+      log_event "WARN" "Disk space critical: ${usage} on ${target}"
       found_issue=1
     fi
-  done < <(df -h --output=pcent,target | tail -n +2 | awk '{print $1","$2}')
+  done < <(df -h --output=pcent,target | tail -n +2)
 
   [[ ${found_issue} -eq 0 ]] && log_event "OK" "Disk usage normal."
 }
@@ -150,7 +149,7 @@ main() {
 
   # 3. Initialization
   rotate_logs
-  log_event "INFO" "Starting K'aatech System Health Audit v${VERSION}"
+  log_event "INFO" "Starting K'aatech System Health Audit v${SUITE_VERSION}"
   log_event "INFO" "-------------------------------------------------"
   # 4. Maintenance
   [[ -f /var/run/reboot-required ]] && log_event "WARN" "SYSTEM REBOOT REQUIRED (Security updates pending)"
