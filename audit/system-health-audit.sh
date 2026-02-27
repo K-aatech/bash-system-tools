@@ -25,9 +25,9 @@ readonly CORE_DEPS=(awk sed grep df free uptime stat vmstat ps ip ss ping)
 readonly OPTIONAL_DEPS=(sensors bc)
 
 # --- Bootstrap ---
-# Deterministic path calculation with fail-fast logic
-local_script_dir="$(dirname "$(readlink -f "$0")")" || exit 1
-readonly SCRIPT_DIR="${local_script_dir}"
+# Deterministic path calculation (Cross-platform compatible) with fail-fast logic
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
 LIB_LOGGING="${SCRIPT_DIR}/../lib/logging.sh"
 LIB_UTILS="${SCRIPT_DIR}/../lib/sys-utils.sh"
 LIB_NET="${SCRIPT_DIR}/../lib/net-utils.sh"
@@ -41,7 +41,7 @@ LIB_NET="${SCRIPT_DIR}/../lib/net-utils.sh"
 
 # --- Core Functions ---
 audit_thermal_status() {
-  if ! command -v sensors > /dev/null 2>&1; then return 0; fi
+  command -v sensors > /dev/null 2>&1 || return 0
 
   local max_temp
   log_event "INFO" "Checking thermal status..."
@@ -56,9 +56,10 @@ audit_thermal_status() {
 
 audit_cpu_performance() {
   local load_1m load_5m load_15m iowait
+  log_event "INFO" "Auditing CPU performance..."
 
   # Capturing the three load averages (Resilient Parsing)
-  read -r load_1m load_5m load_15m < <(uptime | sed 's/.*load average: //' | sed 's/,//g')
+  read -r load_1m load_5m load_15m < <(uptime | sed 's/.*load average: //' | tr -d ',')
   log_event "INFO" "CPU Load Average: [1m: ${load_1m}] [5m: ${load_5m}] [15m: ${load_15m}]"
 
   iowait=$(vmstat 1 2 | tail -1 | awk '{print $16}')
@@ -73,14 +74,15 @@ audit_zombie_processes() {
   local zombies_list z_pid z_ppid z_state z_cmd p_name count
   log_event "INFO" "Checking for zombie processes..."
 
-  # Capturing PID, PPID, State and Comm for zombies
-  zombies_list=$(ps -eo pid,ppid,state,comm | awk '$3=="Z"' || true)
+  # We obtain the list. We use a custom delimiter to avoid conflicts with the global IFS.
+  zombies_list=$(ps -eo pid,ppid,state,comm | awk '$3=="Z" {print $1","$2","$3","$4}' || true)
 
   if [[ -n "${zombies_list}" ]]; then
     count=$(echo "${zombies_list}" | wc -l | xargs)
     log_event "WARN" "Detected ${count} zombie process(es):"
 
-    while read -r z_pid z_ppid z_state z_cmd; do
+    # We changed IFS locally to parse the comma-delimited list
+    while IFS=',' read -r z_pid z_ppid z_state z_cmd; do
       p_name=$(ps -p "${z_ppid}" -o comm= 2> /dev/null || echo "unknown")
       log_event "WARN" "  - PID: ${z_pid} [State: ${z_state}] | Parent: ${p_name} (${z_ppid}) | CMD: ${z_cmd}"
     done <<< "${zombies_list}"
@@ -111,13 +113,14 @@ audit_disk_health() {
 
   log_event "INFO" "Scanning disk partitions..."
   # Process substitution is safer than piping to while for variable scope
-  while read -r pcent target; do
+  # We use a comma as a delimiter to avoid problems with the global IFS and folder names with spaces.
+  while IFS=',' read -r pcent target; do
     usage=${pcent%\%}
     if [[ "${usage}" -ge "${THRESHOLD_DISK}" ]]; then
       log_event "WARN" "Disk space critical: ${usage}% on ${target}"
       found_issue=1
     fi
-  done < <(df -h --output=pcent,target | tail -n +2)
+  done < <(df -h --output=pcent,target | tail -n +2 | awk '{print $1","$2}')
 
   [[ ${found_issue} -eq 0 ]] && log_event "OK" "Disk usage normal."
 }
