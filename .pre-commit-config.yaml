@@ -18,24 +18,14 @@ repos:
       - id: fix-executables
         name: Fix script permissions (Governance)
         # We use logic that detects whether to use `git update-index` or `chmod` based on the environment, ensuring compatibility across Windows and Linux.       #
-        entry: bash -c '
-          if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-          git ls-files "scripts/*" "audit/*" "hardening/*" "maintenance/*" "deploy/*" "test/unit/*" | xargs -I {} git update-index --chmod=+x {};
-          else
-          chmod +x scripts/* audit/* hardening/* maintenance/* deploy/* test/unit/* 2>/dev/null || true;
-          fi'
+        entry: bash -c 'if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then git ls-files "scripts/*" "audit/*" "hardening/*" "maintenance/*" "deploy/*" "test/unit/*" | grep -v ".gitkeep" | xargs -I {} git update-index --chmod=+x {}; else find scripts/ audit/ hardening/ maintenance/ deploy/ test/unit/ -type f ! -name ".gitkeep" -exec chmod +x {} + 2>/dev/null || true; fi'
         language: system
         stages: [pre-commit]
         pass_filenames: false
 
       - id: remove-executables
         name: Remove library permissions (Governance)
-        entry: bash -c '
-          if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-          git ls-files "lib/*" "test/lib/*" "docs/*.md" | xargs -I {} git update-index --chmod=-x {};
-          else
-          chmod -x lib/* test/lib/* docs/*.md 2>/dev/null || true;
-          fi'
+        entry: bash -c 'if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then git ls-files "lib/*" "test/lib/*" "docs/*.md" | xargs -I {} git update-index --chmod=-x {}; else chmod -x lib/* test/lib/* docs/*.md 2>/dev/null || true; fi'
         language: system
         stages: [pre-commit]
         pass_filenames: false
