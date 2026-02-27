@@ -39,6 +39,13 @@ LIB_NET="${SCRIPT_DIR}/../lib/net-utils.sh"
 # shellcheck source=../lib/net-utils.sh
 [[ -f "${LIB_NET}" ]] && source "${LIB_NET}"
 
+# It allows overwriting from the environment, e.g.: log_dir=/var/log/custom ./script.sh
+export log_dir="${log_dir:-./logs}"
+LOG_FILE="${log_dir}/$(basename "$0" .sh).log"
+export LOG_FILE
+# Asegurar que el directorio de logs existe antes de iniciar
+[[ ! -d "${log_dir}" ]] && mkdir -p "${log_dir}"
+
 # --- Core Functions ---
 audit_thermal_status() {
   command -v sensors > /dev/null 2>&1 || return 0

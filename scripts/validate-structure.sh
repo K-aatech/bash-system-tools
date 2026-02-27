@@ -32,6 +32,13 @@ else
   exit 1
 fi
 
+# It allows overwriting from the environment, e.g.: log_dir=/var/log/custom ./script.sh
+export log_dir="${log_dir:-./logs}"
+LOG_FILE="${log_dir}/$(basename "$0" .sh).log"
+export LOG_FILE
+# Asegurar que el directorio de logs existe antes de iniciar
+[[ ! -d "${log_dir}" ]] && mkdir -p "${log_dir}"
+
 # Shellcheck source=../lib/sys-utils.sh
 if [[ -f "$LIB_UTILS" ]]; then
   # shellcheck source=/dev/null

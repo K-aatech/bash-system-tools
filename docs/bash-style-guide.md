@@ -161,6 +161,21 @@ log_event "CRIT" "Violación de seguridad detectada en: ${file_path}"
 
 Los mensajes de diagnóstico deben viajar por `stderr` para permitir que `stdout` se reserve exclusivamente para datos crudos o "piping" entre herramientas. La librería `logging.sh` garantiza este comportamiento.
 
+### 9.4 Persistencia y Variables de Entorno
+
+Para habilitar la escritura en archivos, los scripts deben exportar las variables de control antes de invocar `log_event`. Se recomienda el uso de valores por defecto para evitar errores de `unbound variable` (`set -u`):
+
+- **log_dir**: Directorio base para los logs (por defecto `./logs`).
+- **LOG_FILE**: Ruta completa al archivo de log (por defecto `${log_dir}/<script_name>.log`).
+
+Ejemplo de preámbulo estándar:
+
+```bash
+export log_dir="${log_dir:-./logs}"
+export LOG_FILE="${log_dir}/audit.log"
+[[ -d "${log_dir}" ]] || mkdir -p "${log_dir}"
+```
+
 ## 10. Estándares de Documentación
 
 - **Idioma del código:** Inglés (variables, funciones, comentarios técnicos)

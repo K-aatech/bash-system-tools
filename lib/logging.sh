@@ -39,6 +39,9 @@ log_event() {
   local level="${1:-INFO}"
   local message="${2:-No message provided}"
   local timestamp color label visual_signaling log_dir
+  # Persistence (Handling unbound variables gracefully)
+  local target_file="${LOG_FILE:-/tmp/kaatech.log}"
+  local target_dir="${log_dir:-/tmp}"
 
   timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
@@ -79,11 +82,11 @@ log_event() {
     "${CLR_RESET}" "${timestamp}" "${message}" "${CLR_OFF}" >&2
 
   # Persistence (We cleaned ANSI escape codes for the flat log file)
-  if [[ -w "${LOG_FILE}" || (! -f "${LOG_FILE}" && -w "${log_dir}") ]]; then
+  if [[ -w "${target_file}" || (! -f "${target_file}" && -w "${target_dir}") ]]; then
     # shellcheck disable=SC2001
     local clean_msg
     clean_msg=$(echo -e "${message}" | sed 's/\x1b\[[0-9;]*m//g')
-    printf "[%s] %s - %s\n" "${level^^}" "${timestamp}" "${clean_msg}" >> "${LOG_FILE}" 2> /dev/null || true
+    printf "[%s] %s - %s\n" "${level^^}" "${timestamp}" "${clean_msg}" >> "${target_file}" 2> /dev/null || true
   fi
 }
 
