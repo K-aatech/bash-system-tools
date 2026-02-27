@@ -4,7 +4,7 @@ Este documento define los estándares obligatorios de ingeniería para *scripts*
 
 El cumplimiento de esta guía es obligatorio para garantizar confiabilidad, portabilidad, mantenibilidad y seguridad operativa.
 
-## 1. Requisitos de Ejecución
+## 1. Requisitos de Ejecución y Seguridad
 
 - ***Shell* mínimo requerido:** Bash >= 4.2
 - **Scripts Ejecutables:** Todos los *scripts* destinados a ejecución directa deben iniciar con el siguiente preámbulo para garantizar un comportamiento determinista y seguro:
@@ -134,27 +134,32 @@ Cuando sea pertinente, manejar señales `INT` y `TERM`.
 
 Todo *script* que acepte argumentos debe validar que los parámetros obligatorios no estén vacíos antes de proceder.
 
-## 9. Estrategia de *Logging*
+## 9. Estrategia de *Logging* y Salida
 
-El uso directo de `echo` está permitido en *scripts* simples. <br>
-Ejemplo:
-`echo "Error: File not found" >&2`
+Se prohíbe el uso de `echo` para reportar estados o errores. Es obligatorio el uso de la librería centralizada `lib/logging.sh`.
 
-Para automatizaciones de mayor complejidad se recomienda:
+### 9.1 Uso de la Librería Centralizada
 
-- Niveles de log (`INFO`, `WARN`, `ERROR`)
-- Separación entre `stdout` y `stderr`
-- Formato consistente
+Todo *script* debe realizar el *source* de la librería de *logs* y utilizar la función `log_event`.
 
-La implementación de *logging* no debe acoplarse a la lógica de negocio.
+- **Niveles soportados:** `INFO`, `OK`, `WARN`, `CRIT`
+- **Separación Automática:** La librería gestiona internamente la redirección a `stderr` para niveles críticos y a `stdout` para informativos.
+- **Formato de impresión:** Se debe utilizar el especificador `%b` en las funciones de impresión internas para interpretar correctamente secuencias de escape.
 
-Los mensajes de error deben redirigirse obligatoriamente a `stderr` (`>&2`) para no interferir con la salida de datos del *script*.
+### 9.2 Ejemplo de Implementación Correcta
 
 ```bash
-log_error() {
-    echo "[ERROR] $*" >&2
-}
+# Sourcing obligatorio
+source "$(dirname "$0")/../lib/logging.sh"
+
+# Uso de eventos
+log_event "INFO" "Iniciando validación estructural..."
+log_event "CRIT" "Violación de seguridad detectada en: ${file_path}"
 ```
+
+### 9.3 Redirección de Flujos
+
+Los mensajes de diagnóstico deben viajar por `stderr` para permitir que `stdout` se reserve exclusivamente para datos crudos o "piping" entre herramientas. La librería `logging.sh` garantiza este comportamiento.
 
 ## 10. Estándares de Documentación
 
