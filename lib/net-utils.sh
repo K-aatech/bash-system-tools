@@ -96,10 +96,10 @@ check_multi_cloud_latency() {
 
   for name in "${!targets[@]}"; do
     local host="${targets[$name]}"
-    local latency
+    local latency=""
 
-    # Ping attempt with a 2s timeout and 3 packets to get an average latency
-    latency=$(ping -c 3 -i 0.2 -W 2 "${host}" 2> /dev/null | tail -1 | awk -F '/' '{print $5}')
+    # Ping attempt with a 2s timeout and 4 packets to get an average latency
+    latency=$(ping -c 4 -i 0.2 -W 2 "${host}" 2> /dev/null | tail -1 | awk -F '/' '{print $5}' || true)
 
     if [[ -n "${latency}" ]]; then
       log_event "INFO" "Latency to ${name} (${host}): ${latency} ms"

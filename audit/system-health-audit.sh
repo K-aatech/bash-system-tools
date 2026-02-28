@@ -57,7 +57,9 @@ audit_thermal_status() {
 
   if [[ -n "${max_temp}" ]]; then
     log_event "INFO" "Max CPU Temperature: ${max_temp}°C"
-    [[ "${max_temp}" -ge "${THRESHOLD_TEMP}" ]] && log_event "WARN" "High temperature detected!"
+    if [[ "${max_temp}" -ge "${THRESHOLD_TEMP}" ]]; then
+      log_event "WARN" "High temperature detected!"
+    fi
   fi
 }
 
@@ -108,27 +110,32 @@ audit_memory_usage() {
   if [[ -n "${total}" ]] && [[ "${total}" -gt 0 ]]; then
     usage=$((used * 100 / total))
     log_event "INFO" "RAM Usage: ${usage}% (${used}MB/${total}MB)"
-    [[ "${usage}" -ge "${THRESHOLD_RAM}" ]] && log_event "WARN" "High RAM consumption!"
+    if [[ "${usage}" -ge "${THRESHOLD_RAM}" ]]; then
+      log_event "WARN" "High RAM consumption!"
+    fi
   else
     log_event "CRIT" "Could not determine RAM metrics."
   fi
 }
 
 audit_disk_health() {
-  local target usage
+  local usage target p_val
   local -i found_issue=0
 
   log_event "INFO" "Scanning disk partitions..."
   while read -r usage target; do
-    local p_val="${usage%\%}"
-
-    if [[ "$p_val" -ge "$THRESHOLD_DISK" ]]; then
-      log_event "WARN" "Disk space critical: ${usage} on ${target}"
-      found_issue=1
+    p_val=$(echo "${usage}" | tr -d '%[:space:]')
+    if [[ "$p_val" =~ ^[0-9]+$ ]]; then
+      if [[ "$p_val" -ge "$THRESHOLD_DISK" ]]; then
+        log_event "WARN" "Disk space critical: ${usage} on ${target}"
+        found_issue=1
+      fi
     fi
   done < <(df -h --output=pcent,target | tail -n +2)
 
-  [[ ${found_issue} -eq 0 ]] && log_event "OK" "Disk usage normal."
+  if [[ ${found_issue} -eq 0 ]]; then
+    log_event "OK" "Disk usage normal."
+  fi
 }
 
 # --- Main Execution ---
