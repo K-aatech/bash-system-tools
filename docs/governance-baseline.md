@@ -95,6 +95,10 @@ El repositorio implementa una auditoría estricta de permisos para garantizar la
 > [!NOTE]
 > El sistema de *pre-commit* intentará auto-remediar estos permisos localmente, pero la CI rechazará cualquier *commit* que no cumpla con este estándar.
 
+#### Auditoría de Integridad
+
+En entornos donde el sistema de archivos no soporta permisos POSIX nativos, la "Fuente de Verdad" para la auditoría de seguridad y *bits* de ejecución será el **Índice de Git** (`git ls-files --stage`), no los atributos del disco local.
+
 ---
 
 La introducción de nuevas carpetas de primer nivel debe justificarse técnicamente.

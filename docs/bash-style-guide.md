@@ -4,26 +4,29 @@ Este documento define los estándares obligatorios de ingeniería para *scripts*
 
 El cumplimiento de esta guía es obligatorio para garantizar confiabilidad, portabilidad, mantenibilidad y seguridad operativa.
 
-## 1. Requisitos de Ejecución
+## 1. Requisitos de Ejecución y Seguridad
 
 - ***Shell* mínimo requerido:** Bash >= 4.2
-- ***Shebang* obligatorio:**
+- **Scripts Ejecutables:** Todos los *scripts* destinados a ejecución directa deben iniciar con el siguiente preámbulo para garantizar un comportamiento determinista y seguro:
 
     ```bash
     #!/usr/bin/env bash
-    ```
-
-- **Modo Seguro (Obligatorio):**
-
-    ```bash
     set -euo pipefail
+    IFS=$'\n\t'
     ```
 
-Significado:
+  Significado:
 
-- `-e` → Termina la ejecución ante cualquier error.
-- `-u` → Falla ante variables no definidas.
-- `-o pipefail` → Detecta fallas en *pipelines*.
+  - `set -e` → Falla inmediatamente si un comando retorna un error.
+  - `set -u` → Falla si se intenta expandir una variable no definida.
+  - `set -o pipefail` → Evita que errores en un *pipe* se oculten si el último comando tiene éxito.
+  - `IFS=$'\n\t'` → Protege contra la división errónea de palabras en archivos o *strings* con espacios.
+
+- **Librerías (archivos en `lib/`):** **PROHIBIDO** el uso de *shebang*. En su lugar, es obligatorio incluir la directiva de ShellCheck para garantizar la validación estática sin otorgar permisos de ejecución:
+
+  ```bash
+  # shellcheck shell=bash
+  ```
 
 Cualquier excepción a esta regla debe estar documentada explícitamente en el encabezado del *script*.
 
@@ -131,26 +134,46 @@ Cuando sea pertinente, manejar señales `INT` y `TERM`.
 
 Todo *script* que acepte argumentos debe validar que los parámetros obligatorios no estén vacíos antes de proceder.
 
-## 9. Estrategia de *Logging*
+## 9. Estrategia de *Logging* y Salida
 
-El uso directo de `echo` está permitido en *scripts* simples. <br>
-Ejemplo:
-`echo "Error: File not found" >&2`
+Se prohíbe el uso de `echo` para reportar estados o errores. Es obligatorio el uso de la librería centralizada `lib/logging.sh`.
 
-Para automatizaciones de mayor complejidad se recomienda:
+### 9.1 Uso de la Librería Centralizada
 
-- Niveles de log (`INFO`, `WARN`, `ERROR`)
-- Separación entre `stdout` y `stderr`
-- Formato consistente
+Todo *script* debe realizar el *source* de la librería de *logs* y utilizar la función `log_event`.
 
-La implementación de *logging* no debe acoplarse a la lógica de negocio.
+- **Niveles soportados:** `INFO`, `OK`, `WARN`, `CRIT`
+- **Separación Automática:** La librería gestiona internamente la redirección a `stderr` para niveles críticos y a `stdout` para informativos.
+- **Formato de impresión:** Se debe utilizar el especificador `%b` en las funciones de impresión internas para interpretar correctamente secuencias de escape.
 
-Los mensajes de error deben redirigirse obligatoriamente a `stderr` (`>&2`) para no interferir con la salida de datos del *script*.
+### 9.2 Ejemplo de Implementación Correcta
 
 ```bash
-log_error() {
-    echo "[ERROR] $*" >&2
-}
+# Sourcing obligatorio
+source "$(dirname "$0")/../lib/logging.sh"
+
+# Uso de eventos
+log_event "INFO" "Iniciando validación estructural..."
+log_event "CRIT" "Violación de seguridad detectada en: ${file_path}"
+```
+
+### 9.3 Redirección de Flujos
+
+Los mensajes de diagnóstico deben viajar por `stderr` para permitir que `stdout` se reserve exclusivamente para datos crudos o "piping" entre herramientas. La librería `logging.sh` garantiza este comportamiento.
+
+### 9.4 Persistencia y Variables de Entorno
+
+Para habilitar la escritura en archivos, los scripts deben exportar las variables de control antes de invocar `log_event`. Se recomienda el uso de valores por defecto para evitar errores de `unbound variable` (`set -u`):
+
+- **log_dir**: Directorio base para los logs (por defecto `./logs`).
+- **LOG_FILE**: Ruta completa al archivo de log (por defecto `${log_dir}/<script_name>.log`).
+
+Ejemplo de preámbulo estándar:
+
+```bash
+export log_dir="${log_dir:-./logs}"
+export LOG_FILE="${log_dir}/audit.log"
+[[ -d "${log_dir}" ]] || mkdir -p "${log_dir}"
 ```
 
 ## 10. Estándares de Documentación
