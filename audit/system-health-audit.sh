@@ -53,7 +53,7 @@ audit_thermal_status() {
   local max_temp
   log_event "INFO" "Checking thermal status..."
   # Extracts the highest temperature from all adapters
-  max_temp=$(sensors -A 2> /dev/null | grep -oP '\+\d+\.\d+°C' | sed 's/[+°C]//g' | sort -nr | head -n1 | cut -d. -f1)
+  max_temp=$(sensors -A 2> /dev/null | grep '°C' | awk '{print $NF}' | grep -oP '\+\d+\.\d+' | tr -d '+' | sort -nr | head -n1 | cut -d. -f1)
 
   if [[ -n "${max_temp}" ]]; then
     log_event "INFO" "Max CPU Temperature: ${max_temp}°C"
