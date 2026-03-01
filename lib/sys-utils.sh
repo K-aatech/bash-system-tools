@@ -18,6 +18,15 @@ if ! command -v log_event > /dev/null 2>&1; then
   }
 fi
 
+# --- Visual Formatting Tools ---
+print_section() {
+  local title="$1"
+  # Colors: 1;34m (Bold Blue), 1;36m (Bold Cyan), 0m (Reset)
+  printf "\n\e[1;34m%s\e[0m\n" "======================================================================"
+  printf "\e[1;36m  🚀 %s\e[0m\n" "$title"
+  printf "\e[1;34m%s\e[0m\n" "======================================================================"
+}
+
 # Recommended Permissions Matrix (Security by Design)
 # Format: "path:expected_mode"
 readonly SECURITY_PATH_POLICY=(

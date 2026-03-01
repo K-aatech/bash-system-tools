@@ -49,17 +49,49 @@ export LOG_FILE
 # --- Core Functions ---
 audit_thermal_status() {
   command -v sensors > /dev/null 2>&1 || return 0
+  log_event "INFO" "Checking thermal status by hardware adapter..."
 
-  local max_temp
-  log_event "INFO" "Checking thermal status..."
-  # Extracts the highest temperature from all adapters
-  max_temp=$(sensors -A 2> /dev/null | grep '°C' | awk '{print $NF}' | grep -oP '\+\d+\.\d+' | tr -d '+' | sort -nr | head -n1 | cut -d. -f1)
+  local current_adapter="Unknown"
+  local max_global=0
 
-  if [[ -n "${max_temp}" ]]; then
-    log_event "INFO" "Max CPU Temperature: ${max_temp}°C"
-    if [[ "${max_temp}" -ge "${THRESHOLD_TEMP}" ]]; then
-      log_event "WARN" "High temperature detected!"
+  # We process the sensor output
+  while read -r line; do
+    # 1. Ignore empty lines or lines that are only help tags
+    [[ -z "${line// /}" || "$line" == "Adapter"* ]] && continue
+
+    # 2. Identify Adapter: Lines that do NOT have a colon and do NOT begin with a space are considered adapter headers
+    if [[ "$line" != *":"* && "$line" != [[:space:]]* ]]; then
+      current_adapter=$(echo "$line" | xargs)
+      continue
     fi
+
+    # 3. Process only lines that have '°C' and a ':' (this avoids processing the orphaned NVMe 'crit')
+    if [[ "$line" == *":"* && "$line" == *"°C"* && "$line" != *"Core "* ]]; then
+      local label current_temp limits
+
+      label=$(echo "$line" | cut -d: -f1 | xargs)
+      # We extract the first temperature that appears.
+      current_temp=$(echo "$line" | grep -oP '\+\d+\.\d+' | head -n1 | tr -d '+')
+      # We extract everything that is in parentheses (full limits)
+      limits=$(echo "$line" | grep -oP '\(.*\)' || echo "")
+
+      if [[ -n "$current_temp" ]]; then
+        log_event "INFO" "  [${current_adapter}] ${label}: ${current_temp}°C ${limits}"
+
+        # Save global maximum
+        local int_temp=${current_temp%.*}
+        if [[ "$int_temp" -gt "$max_global" ]]; then
+          max_global=$int_temp
+        fi
+      fi
+    fi
+  done < <(sensors 2> /dev/null)
+
+  # Final Report
+  if [[ "$max_global" -ge "${THRESHOLD_TEMP}" ]]; then
+    log_event "WARN" "Thermal threshold exceeded! Max: ${max_global}°C"
+  else
+    log_event "OK" "Thermal levels stable (Max: ${max_global}°C)."
   fi
 }
 
@@ -140,48 +172,88 @@ audit_disk_health() {
 
 # --- Main Execution ---
 main() {
+  # PHASE 1: INITIALIZATION & GOVERNANCE
+  print_section "PHASE 1: GOVERNANCE & PRE-CHECKS"
+
   # 1. Validation of Privileges (Security by Design)
-  [[ "${EUID}" -ne 0 ]] && {
+  if [[ "${EUID}" -ne 0 ]]; then
     log_event "CRIT" "Root privileges required for security baseline audit."
     exit 1
-  }
+  fi
+  log_event "INFO" "Privilege escalation verified (Root)."
+
   # 2. Dependency Check (Delegated)
+  log_event "INFO" "Validating core dependencies..."
   check_dependencies "${CORE_DEPS[@]}"
   # Optional (non-blocking) dependencies. Are not critical but enhance reporting
   local missing_opt=()
   for dep in "${OPTIONAL_DEPS[@]}"; do
     command -v "${dep}" > /dev/null 2>&1 || missing_opt+=("${dep}")
   done
-  [[ ${#missing_opt[@]} -gt 0 ]] && log_event "WARN" "Optional tools missing: ${missing_opt[*]}"
+  if [[ ${#missing_opt[@]} -gt 0 ]]; then
+    log_event "WARN" "Optional tools missing: ${missing_opt[*]}"
+  else
+    log_event "OK" "All core and optional dependencies are available."
+  fi
 
-  # 3. Initialization
+  # 3. Log Maintenance
   rotate_logs
   log_event "INFO" "Starting K'aatech System Health Audit v${SUITE_VERSION}"
-  log_event "INFO" "-------------------------------------------------"
+
+  # PHASE 2: SECURITY & MAINTENANCE
+  print_section "PHASE 2: SECURITY & INTEGRITY"
+
   # 4. Maintenance
-  [[ -f /var/run/reboot-required ]] && log_event "WARN" "SYSTEM REBOOT REQUIRED (Security updates pending)"
+  if [[ -f /var/run/reboot-required ]]; then
+    log_event "WARN" "SYSTEM REBOOT REQUIRED (Security updates pending)"
+  else
+    log_event "OK" "No pending reboots required."
+  fi
+
   # 5. Security Audit (Delegated to sys-utils)
   log_event "INFO" "Auditing File Integrity..."
-  audit_baseline_permissions || log_event "WARN" "Permission mismatches detected."
+  if audit_baseline_permissions; then
+    log_event "OK" "Critical file permissions are compliant."
+  else
+    log_event "WARN" "Permission mismatches detected."
+  fi
+
+  # PHASE 3: HARDWARE & PERFORMANCE
+  print_section "PHASE 3: PERFORMANCE AUDIT"
   # 6. Performance Audits
   audit_thermal_status
   audit_cpu_performance
   audit_zombie_processes
   audit_memory_usage
+
+  # PHASE 4: STORAGE AUDIT
+  print_section "PHASE 4: STORAGE & FILESYSTEM"
   audit_disk_health
 
+  # PHASE 5: NETWORK CONTEXT
+  print_section "PHASE 5: NETWORK AUDIT"
   # 7. Network Audits (Delegated to net-utils)
-  log_event "INFO" "--- NETWORK AUDIT ---"
+  log_event "INFO" "Retrieving network interfaces..."
   get_network_context || true
+
+  log_event "INFO" "Resolving DNS configuration..."
   get_dns_resolvers || true
+
+  log_event "INFO" "Scanning listening ports..."
   get_listening_ports
 
   if check_internet_connectivity; then
+    log_event "OK" "Internet connectivity detected."
     check_multi_cloud_latency
+  else
+    log_event "WARN" "No internet connectivity detected. Skipping multi-cloud latency."
   fi
 
-  log_event "INFO" "-------------------------------------------------"
-  log_event "OK" "Audit complete."
+  # FINALIZATION
+  print_section "AUDIT SUMMARY"
+  log_event "OK" "K'aatech System Health Audit finished successfully."
+  log_event "INFO
+  " "\nDetailed logs available at: ${LOG_FILE}\n"
 }
 
 main "$@"
