@@ -14,44 +14,29 @@ if ! command -v log_event > /dev/null 2>&1; then
   log_event() { printf "[%s] %s\n" "${1}" "${*:2}" >&2; }
 fi
 
-# --- Block 1: Local Context (El Fierro) ---
+# --- Block 1: Local Context (Discovery) ---
 
-get_network_context() {
-  local primary_ip gateway netmask interface
-  log_event "INFO" "Collecting local network context..."
+fetch_network_metadata() {
+  # shellcheck disable=SC2034
+  KISA_IFACE=$(ip route get 8.8.8.8 2> /dev/null | awk '/dev/ {print $5}' | head -n1)
 
-  # Identify the main output interface and its associated IP, netmask, and gateway
-  interface=$(ip route get 8.8.8.8 2> /dev/null | awk '/dev/ {print $5}' | head -n1)
-
-  if [[ -z "${interface}" ]]; then
-    log_event "WARN" "No primary network interface detected."
-    return 1
-  fi
-
-  primary_ip=$(ip -4 addr show "${interface}" | awk '/inet / {print $2}' | cut -d/ -f1)
-  netmask=$(ip -4 addr show "${interface}" | awk '/inet / {print $2}' | cut -d/ -f2)
-  gateway=$(ip route show default dev "${interface}" | awk '{print $3}' | head -n1)
-  # If the previous command fails, fallback to the first default found.
-  [[ -z "${gateway}" ]] && gateway=$(ip route | awk '/default/ {print $3}' | head -n1)
-
-  log_event "INFO" "Local Context: [IP: ${primary_ip}] [Mask: /${netmask}] [GW: ${gateway}] [IF: ${interface}]"
-}
-
-get_dns_resolvers() {
-  local nameservers
-  log_event "INFO" "Auditing DNS Resolvers..."
-
-  # Extract nameservers ignoring comments and empty lines
-  nameservers=$(grep '^nameserver' /etc/resolv.conf | awk '{print $2}' | xargs)
-
-  if [[ -n "${nameservers}" ]]; then
-    log_event "INFO" "Configured DNS: ${nameservers}"
-  else
-    log_event "WARN" "No DNS nameservers found in /etc/resolv.conf"
+  if [[ -n "${KISA_IFACE}" ]]; then
+    # shellcheck disable=SC2034
+    KISA_PRIMARY_IP=$(ip -4 addr show "${KISA_IFACE}" | awk '/inet / {print $2}' | cut -d/ -f1)
+    # shellcheck disable=SC2034
+    KISA_NETMASK=$(ip -4 addr show "${KISA_IFACE}" | awk '/inet / {print $2}' | cut -d/ -f2)
+    # shellcheck disable=SC2034
+    KISA_GW=$(ip route show default dev "${KISA_IFACE}" | awk '{print $3}' | head -n1)
+    [[ -z "${KISA_GW}" ]] && KISA_GW=$(ip route | awk '/default/ {print $3}' | head -n1)
   fi
 }
 
-# --- Block 2: Vitality and Ports (Services) ---
+fetch_dns_metadata() {
+  # shellcheck disable=SC2034
+  KISA_DNS=$(grep '^nameserver' /etc/resolv.conf | awk '{print $2}' | xargs)
+}
+
+# --- Block 2: Vitality (Action-Oriented) ---
 
 check_internet_connectivity() {
   log_event "INFO" "Checking internet connectivity (Target: 8.8.8.8)..."
@@ -64,7 +49,9 @@ check_internet_connectivity() {
   fi
 }
 
-get_listening_ports() {
+# --- Block 3: LMetrics (Action-Oriented / Reports) ---
+
+audit_listening_ports() {
   log_event "INFO" "Auditing Open and Active Ports (LISTEN)..."
 
   # GBSG: Use ss (iproute2) as it is the modern standard for socket statistics, providing more accurate and detailed information than netstat.
@@ -81,9 +68,7 @@ get_listening_ports() {
   done
 }
 
-# --- Block 3: Latency and Resolution (Metrics) ---
-
-check_multi_cloud_latency() {
+audit_multi_cloud_latency() {
   # Defining destinations with a focus on global and regional targets for a "Fierro-to-Cloud" perspective
   local -A targets=(
     ["Google DNS"]="8.8.8.8"

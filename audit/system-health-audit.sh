@@ -170,6 +170,8 @@ audit_disk_health() {
   fi
 }
 
+# --- Local Renderers ---
+
 render_host_info() {
   # 1. We call the library function to fill the variables
   fetch_host_metadata
@@ -183,10 +185,27 @@ render_host_info() {
   log_event "INFO" "  Uptime   : ${KISA_UPTIME}"
 }
 
+render_network_context() {
+  fetch_network_metadata
+  fetch_dns_metadata
+
+  if [[ -n "${KISA_IFACE:-}" ]]; then
+    log_event "INFO" "Local Context: [IP: ${KISA_PRIMARY_IP}] [Mask: /${KISA_NETMASK}] [GW: ${KISA_GW}] [IF: ${KISA_IFACE}]"
+  else
+    log_event "WARN" "No primary network interface detected."
+  fi
+
+  if [[ -n "${KISA_DNS:-}" ]]; then
+    log_event "INFO" "Configured DNS: ${KISA_DNS}"
+  else
+    log_event "WARN" "No DNS nameservers found."
+  fi
+}
+
 # --- Main Execution ---
 main() {
-  # PHASE 1: INITIALIZATION & GOVERNANCE
-  print_section "PHASE 1: GOVERNANCE & PRE-CHECKS"
+  # PHASE 1: INITIALIZATION, GOVERNANCE & HOST CONTEXT
+  print_section "PHASE 1: PRE-CHECKS, GOVERNANCE & HOST CONTEXT"
 
   render_host_info
 
@@ -249,17 +268,14 @@ main() {
   print_section "PHASE 5: NETWORK AUDIT"
   # Network Audits (Delegated to net-utils)
   log_event "INFO" "Retrieving network interfaces..."
-  get_network_context || true
-
-  log_event "INFO" "Resolving DNS configuration..."
-  get_dns_resolvers || true
+  render_network_context
 
   log_event "INFO" "Scanning listening ports..."
-  get_listening_ports
+  audit_listening_ports | while read -r line; do log_event "INFO" "${line}"; done
 
   if check_internet_connectivity; then
     log_event "OK" "Internet connectivity detected."
-    check_multi_cloud_latency
+    audit_multi_cloud_latency | while read -r line; do log_event "INFO" "${line}"; done
   else
     log_event "WARN" "No internet connectivity detected. Skipping multi-cloud latency."
   fi
