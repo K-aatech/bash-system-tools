@@ -170,19 +170,34 @@ audit_disk_health() {
   fi
 }
 
+render_host_info() {
+  # 1. We call the library function to fill the variables
+  fetch_host_metadata
+
+  # 2. We printed it in audit format
+  log_event "INFO" "--- Host Identification ---"
+  log_event "INFO" "  Hostname : ${KISA_HOSTNAME}"
+  log_event "INFO" "  OS/Distro: ${KISA_DISTRO}"
+  log_event "INFO" "  Kernel   : ${KISA_KERNEL}"
+  log_event "INFO" "  Arch     : ${KISA_ARCH}"
+  log_event "INFO" "  Uptime   : ${KISA_UPTIME}"
+}
+
 # --- Main Execution ---
 main() {
   # PHASE 1: INITIALIZATION & GOVERNANCE
   print_section "PHASE 1: GOVERNANCE & PRE-CHECKS"
 
-  # 1. Validation of Privileges (Security by Design)
+  render_host_info
+
+  # Validation of Privileges (Security by Design)
   if [[ "${EUID}" -ne 0 ]]; then
     log_event "CRIT" "Root privileges required for security baseline audit."
     exit 1
   fi
   log_event "INFO" "Privilege escalation verified (Root)."
 
-  # 2. Dependency Check (Delegated)
+  # Dependency Check (Delegated)
   log_event "INFO" "Validating core dependencies..."
   check_dependencies "${CORE_DEPS[@]}"
   # Optional (non-blocking) dependencies. Are not critical but enhance reporting
@@ -196,21 +211,21 @@ main() {
     log_event "OK" "All core and optional dependencies are available."
   fi
 
-  # 3. Log Maintenance
+  # Log Maintenance
   rotate_logs
   log_event "INFO" "Starting K'aatech System Health Audit v${SUITE_VERSION}"
 
   # PHASE 2: SECURITY & MAINTENANCE
   print_section "PHASE 2: SECURITY & INTEGRITY"
 
-  # 4. Maintenance
+  # Maintenance
   if [[ -f /var/run/reboot-required ]]; then
     log_event "WARN" "SYSTEM REBOOT REQUIRED (Security updates pending)"
   else
     log_event "OK" "No pending reboots required."
   fi
 
-  # 5. Security Audit (Delegated to sys-utils)
+  # Security Audit (Delegated to sys-utils)
   log_event "INFO" "Auditing File Integrity..."
   if audit_baseline_permissions; then
     log_event "OK" "Critical file permissions are compliant."
@@ -220,7 +235,7 @@ main() {
 
   # PHASE 3: HARDWARE & PERFORMANCE
   print_section "PHASE 3: PERFORMANCE AUDIT"
-  # 6. Performance Audits
+  # Performance Audits
   audit_thermal_status
   audit_cpu_performance
   audit_zombie_processes
@@ -232,7 +247,7 @@ main() {
 
   # PHASE 5: NETWORK CONTEXT
   print_section "PHASE 5: NETWORK AUDIT"
-  # 7. Network Audits (Delegated to net-utils)
+  # Network Audits (Delegated to net-utils)
   log_event "INFO" "Retrieving network interfaces..."
   get_network_context || true
 
@@ -249,11 +264,14 @@ main() {
     log_event "WARN" "No internet connectivity detected. Skipping multi-cloud latency."
   fi
 
+  # PHASE 6: VIRTUALIZATION
+  print_section "PHASE 6: CONTAINER AUDIT"
+  audit_container_status
+
   # FINALIZATION
   print_section "AUDIT SUMMARY"
   log_event "OK" "K'aatech System Health Audit finished successfully."
-  log_event "INFO
-  " "\nDetailed logs available at: ${LOG_FILE}\n"
+  log_event "INFO" "\nDetailed logs available at: ${LOG_FILE}\n"
 }
 
 main "$@"

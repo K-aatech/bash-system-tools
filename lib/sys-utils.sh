@@ -27,6 +27,21 @@ print_section() {
   printf "\e[1;34m%s\e[0m\n" "======================================================================"
 }
 
+# --- Data Retrieval Only (Reusable) ---
+fetch_host_metadata() {
+  # Define suite global variables for data export
+  # shellcheck disable=SC2034
+  KISA_HOSTNAME=$(hostname -f 2> /dev/null || hostname)
+  # shellcheck disable=SC2034
+  KISA_UPTIME=$(uptime -p)
+  # shellcheck disable=SC2034
+  KISA_KERNEL=$(uname -r)
+  # shellcheck disable=SC2034
+  KISA_DISTRO=$(grep '^PRETTY_NAME=' /etc/os-release | cut -d= -f2 | tr -d '"')
+  # shellcheck disable=SC2034
+  KISA_ARCH=$(uname -m)
+}
+
 # Recommended Permissions Matrix (Security by Design)
 # Format: "path:expected_mode"
 readonly SECURITY_PATH_POLICY=(
@@ -37,6 +52,52 @@ readonly SECURITY_PATH_POLICY=(
   "/etc/sudoers:440"
   "/etc/ssh/sshd_config:600"
 )
+
+# Validate dependencies with interactive support and cron compatibility
+check_dependencies() {
+  local -a missing_deps=()
+  local bin pkg_manager user_response
+  local -i is_interactive=0
+
+  [[ -t 0 ]] && is_interactive=1
+  pkg_manager=$(_get_package_manager)
+
+  for bin in "$@"; do
+    command -v "${bin}" > /dev/null 2>&1 || missing_deps+=("${bin}")
+  done
+
+  [[ ${#missing_deps[@]} -eq 0 ]] && return 0
+
+  log_event "WARN" "Missing dependencies: ${missing_deps[*]}"
+
+  if [[ ${is_interactive} -eq 1 ]]; then
+    if [[ "${pkg_manager}" == "unknown" ]]; then
+      log_event "CRIT" "Unsupported distribution. Please install dependencies manually: ${missing_deps[*]}"
+      exit 1
+    fi
+
+    # GBSG: Use printf for prompts and read to local variable
+    printf "[PROMPT] Detected %s. Install missing? (y/N): " "${pkg_manager}"
+    read -r -n 1 user_response
+    printf "\n"
+
+    if [[ "${user_response}" =~ ^[Yy]$ ]]; then
+      # Security Fix: Removed 'sudo' as script must run as root
+      case "${pkg_manager}" in
+        "apt-get") apt-get update -qq && apt-get install -y "${missing_deps[@]}" ;;
+        "dnf") dnf install -y "${missing_deps[@]}" ;;
+        "pacman") pacman -Sy --noconfirm "${missing_deps[@]}" ;;
+        "apk") apk add "${missing_deps[@]}" ;;
+      esac
+    else
+      log_event "CRIT" "Aborted by user."
+      exit 1
+    fi
+  else
+    log_event "CRIT" "Non-interactive: Install ${missing_deps[*]} manually."
+    exit 1
+  fi
+}
 
 # Perform a full audit based on the predefined policy
 audit_baseline_permissions() {
@@ -101,48 +162,36 @@ _get_package_manager() {
   fi
 }
 
-# Validate dependencies with interactive support and cron compatibility
-check_dependencies() {
-  local -a missing_deps=()
-  local bin pkg_manager user_response
-  local -i is_interactive=0
+# --- Virtualization & Containers ---
+audit_container_status() {
+  # 1. Silent binary verification
+  if ! command -v docker > /dev/null 2>&1; then
+    log_event "INFO" "Docker engine not detected on this host."
+    return 0
+  fi
 
-  [[ -t 0 ]] && is_interactive=1
-  pkg_manager=$(_get_package_manager)
+  # 2. Active socket verification
+  if ! docker info > /dev/null 2>&1; then
+    log_event "WARN" "Docker is installed but the daemon is NOT responding."
+    return 0
+  fi
 
-  for bin in "$@"; do
-    command -v "${bin}" > /dev/null 2>&1 || missing_deps+=("${bin}")
-  done
+  log_event "INFO" "Auditing Docker container health..."
 
-  [[ ${#missing_deps[@]} -eq 0 ]] && return 0
+  local total_c running_c failing_c
+  total_c=$(docker ps -a -q | wc -l)
+  running_c=$(docker ps -q | wc -l)
+  # We filter only those that are not 'running' or 'removing'
+  failing_c=$(docker ps -a --filter "status=exited" --filter "status=dead" --filter "status=created" --format "{{.Names}} ({{.Status}})" || true)
 
-  log_event "WARN" "Missing dependencies: ${missing_deps[*]}"
+  log_event "INFO" "  Containers: Total=${total_c} | Running=${running_c}"
 
-  if [[ ${is_interactive} -eq 1 ]]; then
-    if [[ "${pkg_manager}" == "unknown" ]]; then
-      log_event "CRIT" "Unsupported distribution. Please install dependencies manually: ${missing_deps[*]}"
-      exit 1
-    fi
-
-    # GBSG: Use printf for prompts and read to local variable
-    printf "[PROMPT] Detected %s. Install missing? (y/N): " "${pkg_manager}"
-    read -r -n 1 user_response
-    printf "\n"
-
-    if [[ "${user_response}" =~ ^[Yy]$ ]]; then
-      # Security Fix: Removed 'sudo' as script must run as root
-      case "${pkg_manager}" in
-        "apt-get") apt-get update -qq && apt-get install -y "${missing_deps[@]}" ;;
-        "dnf") dnf install -y "${missing_deps[@]}" ;;
-        "pacman") pacman -Sy --noconfirm "${missing_deps[@]}" ;;
-        "apk") apk add "${missing_deps[@]}" ;;
-      esac
-    else
-      log_event "CRIT" "Aborted by user."
-      exit 1
-    fi
+  if [[ -n "${failing_c}" ]]; then
+    log_event "WARN" "Non-running containers detected:"
+    while read -r line; do
+      log_event "WARN" "    -> ${line}"
+    done <<< "${failing_c}"
   else
-    log_event "CRIT" "Non-interactive: Install ${missing_deps[*]} manually."
-    exit 1
+    log_event "OK" "All containers are in a healthy/expected state."
   fi
 }
