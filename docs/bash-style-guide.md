@@ -45,7 +45,15 @@ Cualquier excepción a esta regla debe estar documentada explícitamente en el e
     BACKUP_DIR="/var/backups"
     ```
 
-- **Variables locales:** `snake_case`
+- **Variables de Metadatos (*Namespace* KISA):** `KISA_UPPER_CASE`
+
+  Variables globales de solo lectura que almacenan atributos del sistema (*Host*, Red, OS) extraídos mediante librerías.
+
+  ```bash
+  readonly KISA_HOSTNAME="server-01"
+  ```
+
+- **Variables locales:** `snake_case` (Obligatorio el uso de `local`)
 
     ```bash
     local file_path="/tmp/data"
@@ -157,9 +165,14 @@ log_event "INFO" "Iniciando validación estructural..."
 log_event "CRIT" "Violación de seguridad detectada en: ${file_path}"
 ```
 
-### 9.3 Redirección de Flujos
+### 9.3 Redirección de Flujos y Procesamiento de Salida
 
 Los mensajes de diagnóstico deben viajar por `stderr` para permitir que `stdout` se reserve exclusivamente para datos crudos o "piping" entre herramientas. La librería `logging.sh` garantiza este comportamiento.
+Cuando una función de librería genere una lista de datos (ej. `audit_listening_ports`), el *script* llamador debe procesar esa salida mediante un bucle para mantener la consistencia del *log*:
+
+```bash
+audit_function | while read -r line; do log_event "INFO" "${line}"; done
+```
 
 ### 9.4 Persistencia y Variables de Entorno
 
@@ -244,3 +257,26 @@ Este documento se versiona junto con el repositorio baseline.
 Esta guía se basa en los principios de robustez de la **[Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html)**.
 
 En caso de ambigüedad, escenarios no cubiertos por este documento o debates técnicos sobre el estilo, **prevalecerá el estándar definido por Google**. Se recomienda a los desarrolladores consultar dicha guía para profundizar en las razones detrás de estos estándares de seguridad y legibilidad.
+
+## 16. Patrones de Diseño de Librerías (*Decoupling*)
+
+Para maximizar la reutilización, las librerías deben separar la lógica de obtención de datos de la lógica de presentación.
+
+### 16.1 Funciones de Descubrimiento (*Fetchers*)
+
+- **Prefijo**: `fetch_*`
+- **Responsabilidad**: Consultar el sistema y asignar valores a variables `KISA_*`.
+- **Restricción**: **PROHIBIDO** imprimir en `stdout` o `stderr`. Deben ser "silenciosas".
+- **Uso de ShellCheck**: Es obligatorio usar `# shellcheck disable=SC2034` en variables que se exportan para ser usadas por *scripts* externos.
+
+### 16.2 Funciones de Auditoría (*Auditors*)
+
+- **Prefijo**: `audit_*`
+- **Responsabilidad**: Validar estados activos (ej. servicios, puertos, permisos).
+- **Salida**: Pueden generar *logs* directamente o devolver flujos de texto para ser procesados por un orquestador.
+
+### 16.3 Funciones de Presentación (*Renderers*)
+
+- **Prefijo**: `render_*`
+- **Ubicación**: Preferentemente en el *script* ejecutable (no en la librería).
+- **Responsabilidad**: Tomar datos de las variables `KISA_*` y darles formato visual usando `log_event`.
