@@ -82,3 +82,13 @@ Al abrir el proyecto en *VS Code*, se te sugerirá la instalación de las extens
 > **Bloqueo de Commits**: Si no instala `trufflehog` y `shellcheck` localmente, el proceso fallará. Los *hooks* usan motores locales por velocidad y privacidad.
 
 ¿Tienes problemas con los *hooks* o secretos? Revisa las FAQs de Seguridad [aquí](./FAQS_SECURITY.md).
+
+## Solución de Problemas (*Troubleshooting*)
+
+### Errores de Permisos en Windows
+
+Si el sistema de archivos (NTFS) reporta errores de ejecución (+x/-x) en el *script* de validación o durante el `pre-commit`:
+
+1. Los hooks de `pre-commit` intentarán corregir el índice de *Git* automáticamente.
+2. Si la corrección falla, ejecute manualmente: `git update-index --chmod=[+x|-x] <ruta_del_archivo>`.
+3. Asegúrese de que `git config core.filemode` esté en `false`.

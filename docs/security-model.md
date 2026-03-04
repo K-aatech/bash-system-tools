@@ -93,12 +93,13 @@ El uso de un PAT no debe ampliar privilegios administrativos fuera del proceso d
 
 El uso indebido o expansión de privilegios constituye un incidente de seguridad.
 
-### 5.3 Cumplimiento de CI
+### 5.3 Cumplimiento de CI e Integridad de Código
 
 - Validación del formato de *commit*
-- Cumplimiento de *linting*
+- Cumplimiento de *linting* y **análisis estático preventivo** (*ShellCheck*).
 - Validación de actualización de dependencias
 - Comprobaciones de cumplimiento estructural
+- - **Validación de Identidad**: Los *scripts* de auditoría deben implementar el *namespace* `KISA_` para garantizar que no existan colisiones de variables que puedan ser explotadas para alterar el flujo de ejecución.
 
 ### 5.4 Prevención de Secretos
 
@@ -203,7 +204,7 @@ Cada evento debe evaluarse en función de su impacto en la integridad estructura
 
 Los incidentes pueden clasificarse como:
 
-- **Críticos**: Comprometen la integridad de versiones o gobernanza.
+- **Críticos**: Comprometen la integridad de versiones, gobernanza o **fallos en la matriz de permisos de seguridad del host detectados por la *suite* de auditoría**.
 - **Altos**: Permiten evasión de controles automatizados.
 - **Moderados**: Debilitan controles sin afectar versiones existentes.
 - **Informativos**: No comprometen integridad estructural, pero requieren corrección.
@@ -252,3 +253,22 @@ Los cambios importantes en el modelo de seguridad requieren un incremento de ver
 En esta línea base, la seguridad es estructural, procedimental y automatizada.
 
 No es opcional.
+
+## 14. Seguridad Operativa y Auditoría de Postura
+
+El baseline trasciende la seguridad estática del código para ofrecer **seguridad operativa** mediante scripts de auditoría activa.
+
+### 14.1 Auditoría de Privilegios y *Baseline* de Permisos
+
+La *suite* de auditoría implementa una **Matriz de Permisos Críticos** (definida en `lib/sys-utils.sh`). Esta matriz se considera una extensión del modelo de seguridad y su violación en el *host* se reporta como un hallazgo de nivel `CRIT`.
+
+- **Archivos Sensibles**: `/etc/shadow`, `/etc/gshadow`, `/etc/sudoers` y `sshd_config`.
+- **Validación de Modo**: El sistema no solo busca el modo exacto (ej. 600), sino que alerta sobre cualquier desviación que aumente la superficie de exposición.
+
+### 14.2 Ejecución Segura (*Fail-Fast*)
+
+Para mitigar ejecuciones en entornos inconsistentes, los *scripts* operativos aplican:
+
+- **Protección de *Root***: Los *scripts* con capacidad de auditoría de seguridad exigen privilegios de superusuario (`EUID 0`) de forma explícita antes de acceder a datos sensibles.
+- **Determinismo de Rutas**: Cálculo de rutas relativas absolutas para evitar el secuestro de binarios (*Path Hijacking*).
+- **Manejo de TTY**: Detección inteligente de terminales para evitar la inyección de caracteres de escape en *logs* persistidos.

@@ -4,26 +4,29 @@ Este documento define los estándares obligatorios de ingeniería para *scripts*
 
 El cumplimiento de esta guía es obligatorio para garantizar confiabilidad, portabilidad, mantenibilidad y seguridad operativa.
 
-## 1. Requisitos de Ejecución
+## 1. Requisitos de Ejecución y Seguridad
 
 - ***Shell* mínimo requerido:** Bash >= 4.2
-- ***Shebang* obligatorio:**
+- **Scripts Ejecutables:** Todos los *scripts* destinados a ejecución directa deben iniciar con el siguiente preámbulo para garantizar un comportamiento determinista y seguro:
 
     ```bash
     #!/usr/bin/env bash
-    ```
-
-- **Modo Seguro (Obligatorio):**
-
-    ```bash
     set -euo pipefail
+    IFS=$'\n\t'
     ```
 
-Significado:
+  Significado:
 
-- `-e` → Termina la ejecución ante cualquier error.
-- `-u` → Falla ante variables no definidas.
-- `-o pipefail` → Detecta fallas en *pipelines*.
+  - `set -e` → Falla inmediatamente si un comando retorna un error.
+  - `set -u` → Falla si se intenta expandir una variable no definida.
+  - `set -o pipefail` → Evita que errores en un *pipe* se oculten si el último comando tiene éxito.
+  - `IFS=$'\n\t'` → Protege contra la división errónea de palabras en archivos o *strings* con espacios.
+
+- **Librerías (archivos en `lib/`):** **PROHIBIDO** el uso de *shebang*. En su lugar, es obligatorio incluir la directiva de ShellCheck para garantizar la validación estática sin otorgar permisos de ejecución:
+
+  ```bash
+  # shellcheck shell=bash
+  ```
 
 Cualquier excepción a esta regla debe estar documentada explícitamente en el encabezado del *script*.
 
@@ -42,7 +45,15 @@ Cualquier excepción a esta regla debe estar documentada explícitamente en el e
     BACKUP_DIR="/var/backups"
     ```
 
-- **Variables locales:** `snake_case`
+- **Variables de Metadatos (*Namespace* KISA):** `KISA_UPPER_CASE`
+
+  Variables globales de solo lectura que almacenan atributos del sistema (*Host*, Red, OS) extraídos mediante librerías.
+
+  ```bash
+  readonly KISA_HOSTNAME="server-01"
+  ```
+
+- **Variables locales:** `snake_case` (Obligatorio el uso de `local`)
 
     ```bash
     local file_path="/tmp/data"
@@ -131,26 +142,51 @@ Cuando sea pertinente, manejar señales `INT` y `TERM`.
 
 Todo *script* que acepte argumentos debe validar que los parámetros obligatorios no estén vacíos antes de proceder.
 
-## 9. Estrategia de *Logging*
+## 9. Estrategia de *Logging* y Salida
 
-El uso directo de `echo` está permitido en *scripts* simples. <br>
-Ejemplo:
-`echo "Error: File not found" >&2`
+Se prohíbe el uso de `echo` para reportar estados o errores. Es obligatorio el uso de la librería centralizada `lib/logging.sh`.
 
-Para automatizaciones de mayor complejidad se recomienda:
+### 9.1 Uso de la Librería Centralizada
 
-- Niveles de log (`INFO`, `WARN`, `ERROR`)
-- Separación entre `stdout` y `stderr`
-- Formato consistente
+Todo *script* debe realizar el *source* de la librería de *logs* y utilizar la función `log_event`.
 
-La implementación de *logging* no debe acoplarse a la lógica de negocio.
+- **Niveles soportados:** `INFO`, `OK`, `WARN`, `CRIT`
+- **Separación Automática:** La librería gestiona internamente la redirección a `stderr` para niveles críticos y a `stdout` para informativos.
+- **Formato de impresión:** Se debe utilizar el especificador `%b` en las funciones de impresión internas para interpretar correctamente secuencias de escape.
 
-Los mensajes de error deben redirigirse obligatoriamente a `stderr` (`>&2`) para no interferir con la salida de datos del *script*.
+### 9.2 Ejemplo de Implementación Correcta
 
 ```bash
-log_error() {
-    echo "[ERROR] $*" >&2
-}
+# Sourcing obligatorio
+source "$(dirname "$0")/../lib/logging.sh"
+
+# Uso de eventos
+log_event "INFO" "Iniciando validación estructural..."
+log_event "CRIT" "Violación de seguridad detectada en: ${file_path}"
+```
+
+### 9.3 Redirección de Flujos y Procesamiento de Salida
+
+Los mensajes de diagnóstico deben viajar por `stderr` para permitir que `stdout` se reserve exclusivamente para datos crudos o "piping" entre herramientas. La librería `logging.sh` garantiza este comportamiento.
+Cuando una función de librería genere una lista de datos (ej. `audit_listening_ports`), el *script* llamador debe procesar esa salida mediante un bucle para mantener la consistencia del *log*:
+
+```bash
+audit_function | while read -r line; do log_event "INFO" "${line}"; done
+```
+
+### 9.4 Persistencia y Variables de Entorno
+
+Para habilitar la escritura en archivos, los scripts deben exportar las variables de control antes de invocar `log_event`. Se recomienda el uso de valores por defecto para evitar errores de `unbound variable` (`set -u`):
+
+- **log_dir**: Directorio base para los logs (por defecto `./logs`).
+- **LOG_FILE**: Ruta completa al archivo de log (por defecto `${log_dir}/<script_name>.log`).
+
+Ejemplo de preámbulo estándar:
+
+```bash
+export log_dir="${log_dir:-./logs}"
+export LOG_FILE="${log_dir}/audit.log"
+[[ -d "${log_dir}" ]] || mkdir -p "${log_dir}"
 ```
 
 ## 10. Estándares de Documentación
@@ -221,3 +257,26 @@ Este documento se versiona junto con el repositorio baseline.
 Esta guía se basa en los principios de robustez de la **[Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html)**.
 
 En caso de ambigüedad, escenarios no cubiertos por este documento o debates técnicos sobre el estilo, **prevalecerá el estándar definido por Google**. Se recomienda a los desarrolladores consultar dicha guía para profundizar en las razones detrás de estos estándares de seguridad y legibilidad.
+
+## 16. Patrones de Diseño de Librerías (*Decoupling*)
+
+Para maximizar la reutilización, las librerías deben separar la lógica de obtención de datos de la lógica de presentación.
+
+### 16.1 Funciones de Descubrimiento (*Fetchers*)
+
+- **Prefijo**: `fetch_*`
+- **Responsabilidad**: Consultar el sistema y asignar valores a variables `KISA_*`.
+- **Restricción**: **PROHIBIDO** imprimir en `stdout` o `stderr`. Deben ser "silenciosas".
+- **Uso de ShellCheck**: Es obligatorio usar `# shellcheck disable=SC2034` en variables que se exportan para ser usadas por *scripts* externos.
+
+### 16.2 Funciones de Auditoría (*Auditors*)
+
+- **Prefijo**: `audit_*`
+- **Responsabilidad**: Validar estados activos (ej. servicios, puertos, permisos).
+- **Salida**: Pueden generar *logs* directamente o devolver flujos de texto para ser procesados por un orquestador.
+
+### 16.3 Funciones de Presentación (*Renderers*)
+
+- **Prefijo**: `render_*`
+- **Ubicación**: Preferentemente en el *script* ejecutable (no en la librería).
+- **Responsabilidad**: Tomar datos de las variables `KISA_*` y darles formato visual usando `log_event`.
