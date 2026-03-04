@@ -51,11 +51,12 @@ El repositorio se organiza por dominios de responsabilidad para facilitar su uso
   * **`system-health-audit.sh`**: Nuestra herramienta insignia. Realiza una auditoría integral en **6 Fases Estructuradas** (*Governance, Security, Performance, Storage, Network, y Virtualization*).
 * **`hardening/`**: Herramientas de reforzamiento de seguridad. Aplican políticas de "mínimo privilegio" y cierran brechas en la configuración del SO.
 * **`deploy/`**: (Implementaciones) *Scripts* destinados a la instalación, configuración inicial y despliegue de servicios o aplicaciones específicas.
+  * `install-piler.sh`: **(Nuevo)** Despliegue endurecido de Mail Piler. Implementa compilación desde fuente, gestión segura de secretos y configuración atómica de Nginx/MariaDB.
 * **`maintenance/`**: Automatización de tareas recurrentes como rotación de *logs*, *backups* y limpieza de recursos.
 * **`scripts/`**: Utilidades generales de sistema y herramientas de soporte que asisten al SysAdmin en tareas cotidianas no categorizadas en los módulos anteriores.
 * **`lib/`**: El núcleo de inteligencia del *framework*.
-  * **Modelos *Data-Only***: Librerías especializadas (`sys-utils`, `net-utils`) que extraen metadatos del sistema sin generar ruido en los flujos de salida, permitiendo su reutilización en otros *scripts*.
-  * ***Logging Engine***: Sistema de registro atómico con rotación determinista y soporte visual para terminales modernas.
+  * **Modelos *Data-Only***: Librerías especializadas (`sys-utils`, `net-utils`, `deploy-utils`) que extraen metadatos del sistema y gestionan servicios (Systemd/Nginx) sin generar ruido en los flujos de salida, permitiendo su reutilización en otros *scripts*.
+  * ***Logging Engine***: Sistema de registro atómico con soporte visual mejorado (v1.1.0 con iconografía de estado y rotación determinista).
 
 ## 🤝 Para SysAdmins y Colaboradores
 
@@ -80,6 +81,7 @@ Este repositorio es una implementación de **Ingeniería de Sistemas en *Bash***
 * **Namespace KISA:** Estandarización de atributos de infraestructura para evitar colisiones globales.
 * **Separación de Datos y Presentación:** Los módulos de descubrimiento (`fetch_`) están desacoplados de los módulos de reporte (`render_`), facilitando la futura integración con *Dashboards* o APIs.
 * **Resiliencia Operativa:** Uso de `set -euo pipefail` e `IFS` seguro para evitar fallos silenciosos en entornos productivos.
+* **Interactividad Segura:** Uso de `request_input` para la captura de datos sensibles (*passwords*) sin eco en terminal ni rastro en el historial de Bash (`.bash_history`).
 
 ---
 Desarrollado con rigor por el equipo de [**K'aatech**](https://kaatech.mx).
