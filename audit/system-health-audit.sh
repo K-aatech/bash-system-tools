@@ -287,8 +287,20 @@ main() {
 
   # FINALIZATION
   print_section "AUDIT SUMMARY"
-  log_event "OK" "K'aatech System Health Audit finished successfully."
-  log_event "INFO" "\nDetailed logs available at: ${LOG_FILE}\n"
+
+  local warnings errors
+  warnings=$(grep -c "WARN" "${LOG_FILE}" || echo "0")
+  errors=$(grep -c "CRIT" "${LOG_FILE}" || echo "0")
+
+  log_event "INFO" "Audit completed with ${errors} critical issues and ${warnings} warnings."
+
+  if [[ "${errors}" -gt 0 ]]; then
+    log_event "CRIT" "⚠️  Immediate action required. Please review the findings above."
+  else
+    log_event "OK" "✅ System health is within baseline parameters."
+  fi
+
+  log_event "INFO" "Detailed logs: ${LOG_FILE}"
 }
 
 main "$@"
