@@ -25,20 +25,20 @@ fetch_network_metadata() {
   # 1. Attempt to obtain an active interface via route (without DNS resolution)
   # We use timeout 2 to prevent the 'ip' command from hanging on zombie network stacks
   # shellcheck disable=SC2034
-  KISA_IFACE=$(timeout 2 ip -n route get 8.8.8.8 2> /dev/null | awk '/dev/ {print $5}' | head -n1 || echo "")
+  KISA_IFACE=$(timeout 2 ip -4 route get 8.8.8.8 2> /dev/null | awk '/dev/ {print $5}' | head -n1 || echo "")
 
   # 2. Fallback: If there is no internet route, take the first physical interface with IP.
   if [[ -z "${KISA_IFACE}" ]]; then
-    KISA_IFACE=$(ip -n -4 addr show up | awk '/state UP/ {print $2}' | tr -d ':' | grep -v 'lo' | head -n1 || echo "")
+    KISA_IFACE=$(ip -4 addr show up | awk '/state UP/ {print $2}' | tr -d ':' | grep -v 'lo' | head -n1 || echo "")
   fi
 
   if [[ -n "${KISA_IFACE}" ]]; then
     # shellcheck disable=SC2034
-    KISA_PRIMARY_IP=$(ip -n -4 addr show "${KISA_IFACE}" | awk '/inet / {print $2}' | cut -d/ -f1 || echo "N/A")
+    KISA_PRIMARY_IP=$(ip -4 addr show "${KISA_IFACE}" | awk '/inet / {print $2}' | cut -d/ -f1 || echo "N/A")
     # shellcheck disable=SC2034
-    KISA_NETMASK=$(ip -n -4 addr show "${KISA_IFACE}" | awk '/inet / {print $2}' | cut -d/ -f2 || echo "N/A")
+    KISA_NETMASK=$(ip -4 addr show "${KISA_IFACE}" | awk '/inet / {print $2}' | cut -d/ -f2 || echo "N/A")
     # shellcheck disable=SC2034
-    KISA_GW=$(ip -n route show default dev "${KISA_IFACE}" | awk '{print $3}' | head -n1 || echo "N/A")
+    KISA_GW=$(ip -4 route show default dev "${KISA_IFACE}" | awk '{print $3}' | head -n1 || echo "N/A")
   fi
 }
 
