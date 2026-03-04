@@ -1,7 +1,7 @@
 name: Linting & Standards
 
 permissions:
-    contents: read
+  contents: read
 
 on:
   pull_request:
@@ -28,9 +28,9 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: '3.14' #Latest Python version on 2026-02
+          python-version: "3.14" #Latest Python version on 2026-02
 
       - name: Install and Run Pre-commit
         run: |
           pip install pre-commit==4.1.0
-          SKIP=trufflehog pre-commit run --all-files --show-diff-on-failure
+          SKIP=trufflehog pre-commit run --all-files --show-diff-on-failure --color=always

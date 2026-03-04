@@ -95,6 +95,10 @@ El repositorio implementa una auditoría estricta de permisos para garantizar la
 > [!NOTE]
 > El sistema de *pre-commit* intentará auto-remediar estos permisos localmente, pero la CI rechazará cualquier *commit* que no cumpla con este estándar.
 
+#### Auditoría de Integridad
+
+En entornos donde el sistema de archivos no soporta permisos POSIX nativos, la "Fuente de Verdad" para la auditoría de seguridad y *bits* de ejecución será el **Índice de Git** (`git ls-files --stage`), no los atributos del disco local.
+
 ---
 
 La introducción de nuevas carpetas de primer nivel debe justificarse técnicamente.
@@ -200,14 +204,15 @@ Cuando CI esté habilitado, debe:
 
 La implementación técnica de estas validaciones, así como la matriz de herramientas utilizadas, se detalla en el documento de [Arquitectura de Integración Continua (CI)](./ci-architecture.md).
 
-## 5. Control de Calidad
+## 5. Control de Calidad e Ingeniería de *Shell*
 
 Todos los *scripts* derivados deben:
 
 - Cumplir la [Bash Style Guide](bash-style-guide.md)
-- Pasar análisis con *ShellCheck*
-- Implementar manejo de errores explícito
-- Ser idempotentes cuando aplique
+- Pasar análisis con *ShellCheck* (nivel *error*/*warning* obligatorio).
+- **Inmutabilidad de flujos**: Implementar `set -euo pipefail` e `IFS=$'\n\t'` para garantizar ejecución determinista.
+- **Validación de Código**: Utilizar directivas `# shellcheck source=...` y `# shellcheck disable=...` de forma granular, evitando desactivaciones globales.
+- Implementar manejo de errores explícito y ser idempotentes cuando aplique.
 
 Los desvíos deben justificarse técnicamente.
 
@@ -277,3 +282,32 @@ El incumplimiento de este contrato puede resultar en:
 - Revisión estructural obligatoria
 
 Este documento forma parte integral de la gobernanza técnica del repositorio.
+
+## 12. Estándar de Arquitectura de Módulos (K'aatech)
+
+Para garantizar la reutilización y el desacoplamiento, el repositorio adopta un modelo de **Separación de Datos y Presentación**:
+
+### 12.1 Tipología de Funciones en `lib/`
+
+1. **Fetchers (*Data-Only*)**: Funciones con prefijo `fetch_*`. Su única responsabilidad es extraer datos del sistema y asignarlos a variables. No deben generar salida a `stdout/stderr`.
+2. ***Auditors* (*Action-Oriented*)**: Funciones con prefijo `audit_*`. Realizan validaciones activas y pueden generar *logs* o reportes directamente.
+3. ***Utilities***: Funciones transversales (ej. `log_event`, `print_section`).
+
+### 12.2 *Namespace* de Variables de Sistema
+
+Toda variable de metadatos del *host* extraída mediante *Fetchers* debe utilizar el *namespace* **`KISA_`** (*K'aatech Infrastructure System Attributes*) para evitar colisiones con variables de entorno del sistema o del usuario.
+
+Ejemplos obligatorios:
+
+- `KISA_HOSTNAME`
+- `KISA_DISTRO`
+- `KISA_PRIMARY_IP`
+
+### 12.3 Consumo de Librerías
+
+Los *scripts* ejecutables deben importar librerías mediante rutas relativas deterministas calculadas en el *Bootstrap*:
+
+```bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../lib/sys-utils.sh"
+```
