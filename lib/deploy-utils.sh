@@ -8,12 +8,6 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# --- KISA Metadata ---
-# shellcheck disable=SC2034
-readonly KISA_LIB_NAME="deploy-utils"
-# shellcheck disable=SC2034
-readonly KISA_LIB_VER="1.1.0"
-
 # Dynamically detects the installed PHP-FPM socket (Data Retrieval)
 get_php_fpm_socket() {
   local version
