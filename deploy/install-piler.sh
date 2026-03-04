@@ -60,22 +60,92 @@ initialize_infrastructure() {
   fi
 }
 
+# --- Data Persistence Layer ---
+
+configure_database_schema() {
+  print_section "Database Provisioning"
+
+  local tmp_sql
+  tmp_sql=$(mktemp /tmp/piler_schema.XXXXXX.sql)
+
+  log_event "INFO" "Preparing SQL schema with secure credentials..."
+
+  # We use the KISA_ namespace to identify the deployment source in the database.
+  cat << EOF > "${tmp_sql}"
+CREATE DATABASE IF NOT EXISTS piler CHARACTER SET 'utf8mb4';
+CREATE USER IF NOT EXISTS 'piler'@'localhost' IDENTIFIED BY '${MYSQL_PILER_PASS}';
+GRANT ALL PRIVILEGES ON piler.* TO 'piler'@'localhost';
+SET PASSWORD FOR 'piler'@'localhost' = '${MYSQL_PILER_PASS}';
+FLUSH PRIVILEGES;
+EOF
+
+  # Secure execution (avoids passwords in `ps aux`)
+  # Assumes the user has root access to MariaDB via socket (default in Debian/Ubuntu)
+  if mysql -u root < "${tmp_sql}"; then
+    log_event "OK" "MariaDB: User '${PILER_USER}' and schema 'piler' provisioned."
+  else
+    log_event "CRIT" "MariaDB: Failed to provision database. Check credentials."
+    rm -f "${tmp_sql}"
+    exit 1
+  fi
+  rm -f "${tmp_sql}"
+}
+
+# --- Build & Compilation Layer ---
+
+build_piler_source() {
+  print_section "Source Compilation"
+
+  local piler_tarball="https://github.com/jsuto/piler/archive/refs/heads/master.zip"
+
+  cd "${WORKING_DIR}" || exit 1
+
+  log_event "INFO" "Downloading latest source from GitHub..."
+  wget -q "${piler_tarball}" -O piler-master.zip
+  unzip -q piler-master.zip
+
+  # We enter the extracted directory (the name is usually piler-master)
+  cd piler-master || {
+    log_event "CRIT" "Failed to enter build directory."
+    exit 1
+  }
+
+  log_event "INFO" "Running autoconf and make (this may take a few minutes)..."
+
+  # GBSG: We redirect the verbose output to a build log to avoid cluttering the dashboard
+  local build_log="/var/log/piler_build.log"
+
+  ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var \
+    --with-database=mariadb --enable-tcpwrappers --enable-memcached \
+    > "${build_log}" 2>&1
+
+  log_event "INFO" "Compiling binaries..."
+  make all >> "${build_log}" 2>&1
+
+  log_event "INFO" "Installing to system paths..."
+  make install >> "${build_log}" 2>&1
+
+  log_event "OK" "Compilation finished. Details in ${build_log}"
+}
+
 # --- Main (Presentation Orchestrator) ---
 
 main() {
+  print_section "Mail Piler Deployment"
+  log_event "INFO" "Starting K'aatech Deployment System v${SUITE_VERSION}"
   # PHASE 1: INITIALIZATION, GOVERNANCE & HOST CONTEXT
   print_section "PHASE 1: PRE-CHECKS, GOVERNANCE & HOST CONTEXT"
   ensure_root
   rotate_logs
 
-  # UI Presentation
-  log_event "INFO" "Starting K'aatech Deployment System v${SUITE_VERSION}"
-
   configure_deployment
   initialize_infrastructure
 
-  print_section "Ready for Stage 3"
-  log_event "OK" "Environment validated for ${KISA_HOSTNAME}. Secrets generated."
+  configure_database_schema
+  build_piler_source
+
+  print_section "Build Stage Complete"
+  log_event "OK" "Binaries installed and Database ready."
 }
 
 main "$@"
