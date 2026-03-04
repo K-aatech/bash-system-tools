@@ -6,7 +6,8 @@
       "package-name": "bash-system-tools",
       "include-component-in-tag": false,
       "draft": false,
-      "prerelease": false
+      "prerelease": false,
+      "extra-files": ["audit/system-health-audit.sh"]
     }
   },
   "changelog-sections": [

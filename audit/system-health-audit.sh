@@ -11,8 +11,9 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # --- Environment & Globals ---
-# x-release-please-version
+# x-release-please-start-version
 SUITE_VERSION="0.1.0"
+# x-release-please-end-version
 readonly SUITE_VERSION
 
 THRESHOLD_DISK="${THRESHOLD_DISK:-90}"
