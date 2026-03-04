@@ -26,6 +26,7 @@ Icon?
 
 # --- Local Environment & Secrets ---
 .env
+*.env
 .env.local
 .env.*.local
 # We ignore any file with credentials that the user creates by mistake.
@@ -53,6 +54,7 @@ reports/
 *.log
 *.bak
 *.tmp
+/tmp/*
 *.cache
 *.egg-info/
 .eggs/
