@@ -2,9 +2,11 @@
 
 **Herramientas de grado empresarial para la gestión, seguridad y automatización de sistemas Linux.**
 
+[![ShellCheck](https://github.com/K-aatech/bash-system-tools/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/K-aatech/bash-system-tools/actions/workflows/shellcheck.yml)
 [![Linting & Standards](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml/badge.svg)](https://github.com/K-aatech/bash-system-tools/actions/workflows/linting.yml)
 [![Secret Scanning (TruffleHog)](https://github.com/K-aatech/bash-system-tools/actions/workflows/secret-scanning.yml/badge.svg)](https://github.com/K-aatech/bash-system-tools/actions/workflows/secret-scanning.yml)
 [![CodeQL](https://github.com/K-aatech/bash-system-tools/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/K-aatech/bash-system-tools/actions/workflows/github-code-scanning/codeql)
+
 [![Quality](https://img.shields.io/badge/quality-K'aatech%20Baseline%20v1.1.0-60c1ec)](./docs/governance-baseline.md)
 ![Bash Version](https://img.shields.io/badge/bash-%3E%3D4.2-blue)
 ![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
