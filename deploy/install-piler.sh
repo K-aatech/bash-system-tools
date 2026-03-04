@@ -19,6 +19,7 @@ readonly SUITE_VERSION
 
 readonly PILER_USER="piler"
 readonly PHP_V="8.3"
+readonly WORKING_DIR="/tmp/piler_build"
 
 # --- Bootstrap ---
 LIB_LOGGING="$(dirname "$0")/../lib/logging.sh"
@@ -128,11 +129,67 @@ build_piler_source() {
   log_event "OK" "Compilation finished. Details in ${build_log}"
 }
 
+# --- Service Configuration Layer ---
+
+finalize_configuration() {
+  print_section "System Integration"
+
+  local php_socket
+  php_socket=$(get_php_fpm_socket)
+
+  log_event "INFO" "Configuring Mail Piler environment..."
+
+  # 1. Encryption Configuration (Security by Design)
+  if [[ ! -f /etc/piler/piler.key ]]; then
+    dd if=/dev/urandom bs=56 count=1 of=/etc/piler/piler.key 2> /dev/null
+    chmod 640 /etc/piler/piler.key
+    chown "piler:piler" /etc/piler/piler.key
+    log_event "OK" "Unique encryption key generated."
+  fi
+
+  # 2. Integration with Nginx (via deploy-utils)
+  # Replace variables in the Piler template and deploy the Nginx config atomically with validation.
+  local nginx_tmp="/tmp/piler-nginx.conf"
+  sed -e "s%PILER_HOST%${PILER_HOSTNAME}%g" \
+    -e "s%PHP_FPM_SOCKET%${php_socket}%g" \
+    /etc/piler/piler-nginx.conf.dist > "${nginx_tmp}"
+
+  setup_nginx_vhost "piler.conf" "${nginx_tmp}"
+  rm -f "${nginx_tmp}"
+
+  # 3. Configuration of Manticore/Sphinx (Search Engine)
+  log_event "INFO" "Configuring Manticore Search index..."
+  cp /etc/piler/manticore.conf.dist /etc/piler/manticore.conf
+  sed -i -e "s/MYSQL_HOSTNAME/localhost/g" \
+    -e "s/MYSQL_DATABASE/piler/g" \
+    -e "s/MYSQL_USERNAME/${PILER_USER}/g" \
+    -e "s/MYSQL_PASSWORD/${MYSQL_PILER_PASS}/g" \
+    /etc/piler/manticore.conf
+}
+
+activate_services() {
+  print_section "Service Activation"
+
+  # Enable and start core services
+  local -a services=("piler" "piler-smtp" "pilersearch")
+
+  # Reload systemd to detect new unit files from 'make install'
+  systemctl daemon-reload
+
+  for svc in "${services[@]}"; do
+    manage_service "enable" "${svc}"
+    manage_service "start" "${svc}"
+  done
+
+  log_event "OK" "All Mail Piler services are active."
+}
+
 # --- Main (Presentation Orchestrator) ---
 
 main() {
   print_section "Mail Piler Deployment"
   log_event "INFO" "Starting K'aatech Deployment System v${SUITE_VERSION}"
+  log_event "INFO" "Deployment Target: ${PILER_HOSTNAME}"
   # PHASE 1: INITIALIZATION, GOVERNANCE & HOST CONTEXT
   print_section "PHASE 1: PRE-CHECKS, GOVERNANCE & HOST CONTEXT"
   ensure_root
@@ -144,8 +201,12 @@ main() {
   configure_database_schema
   build_piler_source
 
-  print_section "Build Stage Complete"
-  log_event "OK" "Binaries installed and Database ready."
+  finalize_configuration
+  activate_services
+
+  print_section "Deployment Successful"
+  log_event "OK" "Installation completed for ${KISA_HOSTNAME}."
+  log_event "INFO" "Access your portal at: http://${PILER_HOSTNAME}"
 }
 
 main "$@"
