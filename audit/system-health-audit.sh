@@ -189,8 +189,9 @@ render_network_context() {
   fetch_network_metadata
   fetch_dns_metadata
 
+  # We use :-N/A so that if the variable is empty or does not exist, the script does not die and instead shows "N/A" in the logs, ensuring robustness in environments with limited network configuration.
   if [[ -n "${KISA_IFACE:-}" ]]; then
-    log_event "INFO" "Local Context: [IP: ${KISA_PRIMARY_IP}] [Mask: /${KISA_NETMASK}] [GW: ${KISA_GW}] [IF: ${KISA_IFACE}]"
+    log_event "INFO" "Local Context: [IP: ${KISA_PRIMARY_IP:-N/A}] [Mask: /${KISA_NETMASK:-N/A}] [GW: ${KISA_GW:-N/A}] [IF: ${KISA_IFACE}]"
   else
     log_event "WARN" "No primary network interface detected."
   fi

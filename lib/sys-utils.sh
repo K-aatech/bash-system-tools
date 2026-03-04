@@ -31,15 +31,15 @@ print_section() {
 fetch_host_metadata() {
   # Define suite global variables for data export
   # shellcheck disable=SC2034
-  KISA_HOSTNAME=$(hostname -f 2> /dev/null || hostname)
+  KISA_HOSTNAME=$(hostname -f 2> /dev/null || hostname || echo "localhost")
   # shellcheck disable=SC2034
-  KISA_UPTIME=$(uptime -p)
+  KISA_UPTIME=$(uptime -p 2> /dev/null || echo "unknown")
   # shellcheck disable=SC2034
-  KISA_KERNEL=$(uname -r)
+  KISA_KERNEL=$(uname -r 2> /dev/null || echo "unknown")
   # shellcheck disable=SC2034
-  KISA_DISTRO=$(grep '^PRETTY_NAME=' /etc/os-release | cut -d= -f2 | tr -d '"')
+  KISA_DISTRO=$(grep '^PRETTY_NAME=' /etc/os-release 2> /dev/null | cut -d= -f2 | tr -d '"' || echo "Linux Generic")
   # shellcheck disable=SC2034
-  KISA_ARCH=$(uname -m)
+  KISA_ARCH=$(uname -m 2> /dev/null || echo "unknown")
 }
 
 # Recommended Permissions Matrix (Security by Design)
@@ -171,24 +171,25 @@ audit_container_status() {
   fi
 
   # 2. Active socket verification
-  if ! docker info > /dev/null 2>&1; then
-    log_event "WARN" "Docker is installed but the daemon is NOT responding."
+  if ! timeout 3 docker info > /dev/null 2>&1; then
+    log_event "WARN" "Docker is installed but the daemon is NOT responding (Timeout or socket error)."
     return 0
   fi
 
   log_event "INFO" "Auditing Docker container health..."
 
   local total_c running_c failing_c
-  total_c=$(docker ps -a -q | wc -l)
-  running_c=$(docker ps -q | wc -l)
+  total_c=$(docker ps -a -q 2> /dev/null | wc -l | xargs)
+  running_c=$(docker ps -q 2> /dev/null | wc -l | xargs)
   # We filter only those that are not 'running' or 'removing'
-  failing_c=$(docker ps -a --filter "status=exited" --filter "status=dead" --filter "status=created" --format "{{.Names}} ({{.Status}})" || true)
+  failing_c=$(docker ps -a --filter "status=exited" --filter "status=dead" --filter "status=created" --format "{{.Names}} ({{.Status}})" 2> /dev/null || true)
 
   log_event "INFO" "  Containers: Total=${total_c} | Running=${running_c}"
 
   if [[ -n "${failing_c}" ]]; then
     log_event "WARN" "Non-running containers detected:"
-    while read -r line; do
+    while IFS= read -r line; do
+      [[ -z "$line" ]] && continue
       log_event "WARN" "    -> ${line}"
     done <<< "${failing_c}"
   else

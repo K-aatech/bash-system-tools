@@ -15,25 +15,37 @@ if ! command -v log_event > /dev/null 2>&1; then
 fi
 
 # --- Block 1: Local Context (Discovery) ---
-
+# Defensive initialization to avoid 'set -u' errors
 fetch_network_metadata() {
+  KISA_IFACE=""
+  KISA_PRIMARY_IP="N/A"
+  KISA_NETMASK="N/A"
+  KISA_GW="N/A"
+
+  # 1. Attempt to obtain an active interface via route (without DNS resolution)
+  # We use timeout 2 to prevent the 'ip' command from hanging on zombie network stacks
   # shellcheck disable=SC2034
-  KISA_IFACE=$(ip route get 8.8.8.8 2> /dev/null | awk '/dev/ {print $5}' | head -n1)
+  KISA_IFACE=$(timeout 2 ip -n route get 8.8.8.8 2> /dev/null | awk '/dev/ {print $5}' | head -n1 || echo "")
+
+  # 2. Fallback: If there is no internet route, take the first physical interface with IP.
+  if [[ -z "${KISA_IFACE}" ]]; then
+    KISA_IFACE=$(ip -n -4 addr show up | awk '/state UP/ {print $2}' | tr -d ':' | grep -v 'lo' | head -n1 || echo "")
+  fi
 
   if [[ -n "${KISA_IFACE}" ]]; then
     # shellcheck disable=SC2034
-    KISA_PRIMARY_IP=$(ip -4 addr show "${KISA_IFACE}" | awk '/inet / {print $2}' | cut -d/ -f1)
+    KISA_PRIMARY_IP=$(ip -n -4 addr show "${KISA_IFACE}" | awk '/inet / {print $2}' | cut -d/ -f1 || echo "N/A")
     # shellcheck disable=SC2034
-    KISA_NETMASK=$(ip -4 addr show "${KISA_IFACE}" | awk '/inet / {print $2}' | cut -d/ -f2)
+    KISA_NETMASK=$(ip -n -4 addr show "${KISA_IFACE}" | awk '/inet / {print $2}' | cut -d/ -f2 || echo "N/A")
     # shellcheck disable=SC2034
-    KISA_GW=$(ip route show default dev "${KISA_IFACE}" | awk '{print $3}' | head -n1)
-    [[ -z "${KISA_GW}" ]] && KISA_GW=$(ip route | awk '/default/ {print $3}' | head -n1)
+    KISA_GW=$(ip -n route show default dev "${KISA_IFACE}" | awk '{print $3}' | head -n1 || echo "N/A")
   fi
 }
 
 fetch_dns_metadata() {
+  # xargs removes extra spaces and line breaks, turning the list into a single line
   # shellcheck disable=SC2034
-  KISA_DNS=$(grep '^nameserver' /etc/resolv.conf | awk '{print $2}' | xargs)
+  KISA_DNS=$(grep '^nameserver' /etc/resolv.conf 2> /dev/null | awk '{print $2}' | xargs || echo "None")
 }
 
 # --- Block 2: Vitality (Action-Oriented) ---
@@ -62,10 +74,21 @@ audit_listening_ports() {
 
   # Capture TCP/UDP ports in LISTEN state
   # Format: Protocol | Port | Service/Process
-  log_event "INFO" "Port Mapping (TCP/UDP LISTEN):"
-  ss -tunlpH | awk '{printf "  - %-5s %-10s %-20s\n", $1, $5, $7}' | while read -r line; do
-    log_event "INFO" "${line}"
-  done
+  # We use a temporary variable to capture the output and avoid breaking the set -e pipe.
+  local port_data
+  port_data=$(ss -tunlpH 2> /dev/null) || true
+
+  if [[ -n "${port_data}" ]]; then
+    log_event "INFO" "Port Mapping (TCP/UDP LISTEN):"
+    while read -r line; do
+      # We clean spaces and format the output to be more readable, showing protocol, port, and service/process name.
+      local fmt_line
+      fmt_line=$(echo "${line}" | awk '{printf "  - %-5s %-10s %-20s", $1, $5, $7}')
+      log_event "INFO" "${fmt_line}"
+    done <<< "${port_data}"
+  else
+    log_event "OK" "No open listening ports detected or access denied."
+  fi
 }
 
 audit_multi_cloud_latency() {
