@@ -38,7 +38,8 @@
         "tooling",
         "scripts",
         "lib",
-        "audit"
+        "audit",
+        "deploy"
     ],
     "markdown.validate.enabled": true
 }

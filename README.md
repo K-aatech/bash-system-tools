@@ -10,6 +10,7 @@
 [![Quality](https://img.shields.io/badge/quality-K'aatech%20Baseline%20v1.1.0-60c1ec)](./docs/governance-baseline.md)
 ![Bash Version](https://img.shields.io/badge/bash-%3E%3D4.2-blue)
 ![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
+![Stable Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?exclude_prereleases&color=blue&label=stable)
 
 ## 📋 Descripción General
 
@@ -51,11 +52,12 @@ El repositorio se organiza por dominios de responsabilidad para facilitar su uso
   * **`system-health-audit.sh`**: Nuestra herramienta insignia. Realiza una auditoría integral en **6 Fases Estructuradas** (*Governance, Security, Performance, Storage, Network, y Virtualization*).
 * **`hardening/`**: Herramientas de reforzamiento de seguridad. Aplican políticas de "mínimo privilegio" y cierran brechas en la configuración del SO.
 * **`deploy/`**: (Implementaciones) *Scripts* destinados a la instalación, configuración inicial y despliegue de servicios o aplicaciones específicas.
+  * `install-piler.sh`: **`install-piler.sh`**: **(v0.2.0)** Despliegue profesional para Mail Piler. Implementa compilación nativa desde fuente, gestión híbrida de zonas horarias (UTC/Local), y configuración atómica de Nginx/MariaDB. [Ver Manual de Ingeniería](./docs/engineering-manual-piler.md).
 * **`maintenance/`**: Automatización de tareas recurrentes como rotación de *logs*, *backups* y limpieza de recursos.
 * **`scripts/`**: Utilidades generales de sistema y herramientas de soporte que asisten al SysAdmin en tareas cotidianas no categorizadas en los módulos anteriores.
 * **`lib/`**: El núcleo de inteligencia del *framework*.
-  * **Modelos *Data-Only***: Librerías especializadas (`sys-utils`, `net-utils`) que extraen metadatos del sistema sin generar ruido en los flujos de salida, permitiendo su reutilización en otros *scripts*.
-  * ***Logging Engine***: Sistema de registro atómico con rotación determinista y soporte visual para terminales modernas.
+  * **Modelos *Data-Only***: Librerías especializadas (`sys-utils`, `net-utils`, `deploy-utils`) que extraen metadatos del sistema y gestionan servicios (Systemd/Nginx) sin generar ruido en los flujos de salida, permitiendo su reutilización en otros *scripts*.
+  * ***Logging Engine***: Sistema de registro atómico con soporte visual mejorado (v1.1.0 con iconografía de estado y rotación determinista).
 
 ## 🤝 Para SysAdmins y Colaboradores
 
@@ -64,8 +66,8 @@ Este proyecto es de código abierto para fomentar la transparencia y la mejora c
 * **Para SysAdmins:** Cada herramienta incluye documentación técnica interna. Siéntete libre de usar y adaptar estas herramientas en tus flujos de trabajo.
 * **Para Colaboradores:** Valoramos las contribuciones que respeten nuestra gobernanza. Consulta las [Directrices de Contribución](./CONTRIBUTING.md) para conocer nuestro flujo *Trunk-based*.
 
-  > [!NOTE]
-  > **Calidad:** Todas las herramientas pasan por validaciones estáticas con *ShellCheck* antes de ser publicadas.
+> [!NOTE]
+> **Calidad:** Todas las herramientas pasan por validaciones estáticas con *ShellCheck* antes de ser publicadas.
 
 ## ⚖️ Estándares de Ingeniería
 
@@ -80,6 +82,7 @@ Este repositorio es una implementación de **Ingeniería de Sistemas en *Bash***
 * **Namespace KISA:** Estandarización de atributos de infraestructura para evitar colisiones globales.
 * **Separación de Datos y Presentación:** Los módulos de descubrimiento (`fetch_`) están desacoplados de los módulos de reporte (`render_`), facilitando la futura integración con *Dashboards* o APIs.
 * **Resiliencia Operativa:** Uso de `set -euo pipefail` e `IFS` seguro para evitar fallos silenciosos en entornos productivos.
+* **Interactividad Segura:** Uso de `request_input` para la captura de datos sensibles (*passwords*) sin eco en terminal ni rastro en el historial de Bash (`.bash_history`).
 
 ---
 Desarrollado con rigor por el equipo de [**K'aatech**](https://kaatech.mx).

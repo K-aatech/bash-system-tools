@@ -23,6 +23,7 @@ module.exports = {
             "always",
             [
                 "audit", // docs/governance-baseline.md
+                "deploy", // deploy/
                 "hardening", // hardening/
                 "maintenance", // maintenance/
                 "scripts", // scripts/

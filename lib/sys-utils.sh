@@ -31,7 +31,7 @@ print_section() {
 fetch_host_metadata() {
   # Define suite global variables for data export
   # shellcheck disable=SC2034
-  KISA_HOSTNAME=$(hostname -f 2> /dev/null || hostname || echo "localhost")
+  KISA_HOSTNAME=$(hostname -s 2> /dev/null || hostname || echo "localhost")
   # shellcheck disable=SC2034
   KISA_UPTIME=$(uptime -p 2> /dev/null || echo "unknown")
   # shellcheck disable=SC2034
@@ -52,6 +52,36 @@ readonly SECURITY_PATH_POLICY=(
   "/etc/sudoers:440"
   "/etc/ssh/sshd_config:600"
 )
+
+# Validate root privileges (Security by Design)
+ensure_root() {
+  if [[ "${EUID}" -ne 0 ]]; then
+    log_event "CRIT" "This operation requires root privileges. Aborting."
+    exit 1
+  fi
+}
+
+# Requests user input securely (without echo in terminal)
+# Arguments: variable_name, prompt_text, is_secret (1|0)
+request_input() {
+  local var_name="${1}"
+  local prompt_text="${2}"
+  local is_secret="${3:-0}"
+  local input_val=""
+
+  # We only ask if the variable is empty and there is a TTY
+  if [[ -z "${!var_name:-}" && -t 0 ]]; then
+    printf "❓ [PROMPT] %s: " "${prompt_text}"
+    if [[ "${is_secret}" -eq 1 ]]; then
+      read -r -s input_val
+      echo # Required line break after read -s
+    else
+      read -r input_val
+    fi
+    # Dynamic assignment to the global variable
+    eval "${var_name}=\"${input_val}\""
+  fi
+}
 
 # Validate dependencies with interactive support and cron compatibility
 check_dependencies() {
