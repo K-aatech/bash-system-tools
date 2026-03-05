@@ -16,8 +16,8 @@ readonly SUITE_VERSION
 : "${PILER_HOSTNAME:=""}"
 : "${MYSQL_ROOT_PASS:=""}"
 : "${MYSQL_PILER_PASS:=""}"
+: "${PILER_USER:="piler"}"
 
-readonly PILER_USER="piler"
 readonly PHP_V="8.3"
 readonly WORKING_DIR="/tmp/piler_build"
 
@@ -45,20 +45,45 @@ configure_deployment() {
   # 2. Secure data entry
   request_input "PILER_HOSTNAME" "Enter Piler FQDN" 0
   request_input "MYSQL_ROOT_PASS" "Enter MariaDB Root Password" 1
+  request_input "PILER_USER" "Enter system/db username (default: piler)" 0
 
-  [[ -z "${MYSQL_PILER_PASS}" ]] && MYSQL_PILER_PASS=$(generate_secret 24)
+  # 3. Intelligent application password management
+  if [[ -z "${MYSQL_PILER_PASS}" ]]; then
+    # If it wasn't injected, we ask if you want to define it or generate it.
+    printf "❓ [PROMPT] Enter password for '%s' (leave empty to auto-generate): " "${PILER_USER}"
+    read -r -s user_db_pass
+    echo
+    if [[ -z "${user_db_pass}" ]]; then
+      MYSQL_PILER_PASS=$(generate_secret 24)
+      log_event "OK" "Auto-generated secure password for ${PILER_USER}: ${MYSQL_PILER_PASS}"
+    else
+      MYSQL_PILER_PASS="${user_db_pass}"
+    fi
+  fi
 }
 
 initialize_infrastructure() {
   print_section "Infrastructure Setup"
 
-  local -a deps=(wget openssl build-essential mariadb-server nginx "php${PHP_V}-fpm")
+  mkdir -p "${WORKING_DIR}"
+
+  local free_space
+  free_space=$(df -m /var | awk 'NR==2 {print $4}')
+  if [[ "${free_space}" -lt 1024 ]]; then
+    log_event "WARN" "Low disk space on /var (${free_space}MB). Compilation might fail."
+  fi
+
+  local -a deps=(
+    wget openssl build-essential mariadb-server nginx
+    "php${PHP_V}-fpm" "php${PHP_V}-mariadb" "php${PHP_V}-cli"
+    unzip pkg-config libmariadb-dev libssl-dev libcurl4-openssl-dev)
   check_dependencies "${deps[@]}"
 
   if ! id -u "${PILER_USER}" > /dev/null 2>&1; then
     useradd --system --no-create-home --shell /bin/false "${PILER_USER}"
     log_event "OK" "System user created."
   fi
+  chown -R "${PILER_USER}:${PILER_USER}" "${WORKING_DIR}"
 }
 
 # --- Data Persistence Layer ---
@@ -69,20 +94,20 @@ configure_database_schema() {
   local tmp_sql
   tmp_sql=$(mktemp /tmp/piler_schema.XXXXXX.sql)
 
-  log_event "INFO" "Preparing SQL schema with secure credentials..."
+  log_event "INFO" "Provisioning MariaDB for user: ${PILER_USER}"
 
   # We use the KISA_ namespace to identify the deployment source in the database.
   cat << EOF > "${tmp_sql}"
 CREATE DATABASE IF NOT EXISTS piler CHARACTER SET 'utf8mb4';
-CREATE USER IF NOT EXISTS 'piler'@'localhost' IDENTIFIED BY '${MYSQL_PILER_PASS}';
-GRANT ALL PRIVILEGES ON piler.* TO 'piler'@'localhost';
-SET PASSWORD FOR 'piler'@'localhost' = '${MYSQL_PILER_PASS}';
+CREATE USER IF NOT EXISTS '${PILER_USER}'@'localhost' IDENTIFIED BY '${MYSQL_PILER_PASS}';
+ALTER USER '${PILER_USER}'@'localhost' IDENTIFIED BY '${MYSQL_PILER_PASS}';
+GRANT ALL PRIVILEGES ON piler.* TO '${PILER_USER}'@'localhost';
 FLUSH PRIVILEGES;
 EOF
 
   # Secure execution (avoids passwords in `ps aux`)
   # Assumes the user has root access to MariaDB via socket (default in Debian/Ubuntu)
-  if mysql -u root < "${tmp_sql}"; then
+  if MYSQL_PWD="${MYSQL_ROOT_PASS}" mysql -u root < "${tmp_sql}"; then
     log_event "OK" "MariaDB: User '${PILER_USER}' and schema 'piler' provisioned."
   else
     log_event "CRIT" "MariaDB: Failed to provision database. Check credentials."
@@ -134,6 +159,10 @@ build_piler_source() {
 finalize_configuration() {
   print_section "System Integration"
 
+  mkdir -p /etc/piler
+  chown "${PILER_USER}:${PILER_USER}" /etc/piler
+  chmod 755 /etc/piler
+
   local php_socket
   php_socket=$(get_php_fpm_socket)
 
@@ -142,8 +171,8 @@ finalize_configuration() {
   # 1. Encryption Configuration (Security by Design)
   if [[ ! -f /etc/piler/piler.key ]]; then
     dd if=/dev/urandom bs=56 count=1 of=/etc/piler/piler.key 2> /dev/null
-    chmod 640 /etc/piler/piler.key
-    chown "piler:piler" /etc/piler/piler.key
+    chown "${PILER_USER}:${PILER_USER}" /etc/piler/piler.key
+    chmod 600 /etc/piler/piler.key
     log_event "OK" "Unique encryption key generated."
   fi
 
@@ -160,6 +189,11 @@ finalize_configuration() {
   # 3. Configuration of Manticore/Sphinx (Search Engine)
   log_event "INFO" "Configuring Manticore Search index..."
   cp /etc/piler/manticore.conf.dist /etc/piler/manticore.conf
+
+  # ADJUSTMENT: Ensure the service can read your config file and that it has the correct permissions. This is crucial for security and functionality.
+  chown "${PILER_USER}:${PILER_USER}" /etc/piler/manticore.conf
+  chmod 644 /etc/piler/manticore.conf
+
   sed -i -e "s/MYSQL_HOSTNAME/localhost/g" \
     -e "s/MYSQL_DATABASE/piler/g" \
     -e "s/MYSQL_USERNAME/${PILER_USER}/g" \
@@ -187,6 +221,7 @@ activate_services() {
 # --- Main (Presentation Orchestrator) ---
 
 main() {
+  trap 'rm -f /tmp/piler_schema.*.sql' EXIT
   print_section "Mail Piler Deployment"
   log_event "INFO" "Starting K'aatech Deployment System v${SUITE_VERSION}"
   log_event "INFO" "Deployment Target: ${PILER_HOSTNAME}"
