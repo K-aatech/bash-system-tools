@@ -10,6 +10,7 @@
 [![Quality](https://img.shields.io/badge/quality-K'aatech%20Baseline%20v1.1.0-60c1ec)](./docs/governance-baseline.md)
 ![Bash Version](https://img.shields.io/badge/bash-%3E%3D4.2-blue)
 ![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
+![Stable Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?exclude_prereleases&color=blue&label=stable)
 
 ## 📋 Descripción General
 
@@ -51,7 +52,7 @@ El repositorio se organiza por dominios de responsabilidad para facilitar su uso
   * **`system-health-audit.sh`**: Nuestra herramienta insignia. Realiza una auditoría integral en **6 Fases Estructuradas** (*Governance, Security, Performance, Storage, Network, y Virtualization*).
 * **`hardening/`**: Herramientas de reforzamiento de seguridad. Aplican políticas de "mínimo privilegio" y cierran brechas en la configuración del SO.
 * **`deploy/`**: (Implementaciones) *Scripts* destinados a la instalación, configuración inicial y despliegue de servicios o aplicaciones específicas.
-  * `install-piler.sh`: **(Nuevo)** Despliegue endurecido de Mail Piler. Implementa compilación desde fuente, gestión segura de secretos y configuración atómica de Nginx/MariaDB.
+  * `install-piler.sh`: **`install-piler.sh`**: **(v0.2.0)** Despliegue profesional para Mail Piler. Implementa compilación nativa desde fuente, gestión híbrida de zonas horarias (UTC/Local), y configuración atómica de Nginx/MariaDB. [Ver Manual de Ingeniería](./docs/engineering-manual-piler.md).
 * **`maintenance/`**: Automatización de tareas recurrentes como rotación de *logs*, *backups* y limpieza de recursos.
 * **`scripts/`**: Utilidades generales de sistema y herramientas de soporte que asisten al SysAdmin en tareas cotidianas no categorizadas en los módulos anteriores.
 * **`lib/`**: El núcleo de inteligencia del *framework*.
@@ -65,8 +66,8 @@ Este proyecto es de código abierto para fomentar la transparencia y la mejora c
 * **Para SysAdmins:** Cada herramienta incluye documentación técnica interna. Siéntete libre de usar y adaptar estas herramientas en tus flujos de trabajo.
 * **Para Colaboradores:** Valoramos las contribuciones que respeten nuestra gobernanza. Consulta las [Directrices de Contribución](./CONTRIBUTING.md) para conocer nuestro flujo *Trunk-based*.
 
-  > [!NOTE]
-  > **Calidad:** Todas las herramientas pasan por validaciones estáticas con *ShellCheck* antes de ser publicadas.
+> [!NOTE]
+> **Calidad:** Todas las herramientas pasan por validaciones estáticas con *ShellCheck* antes de ser publicadas.
 
 ## ⚖️ Estándares de Ingeniería
 
