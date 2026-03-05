@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/K-aatech/bash-system-tools/compare/v0.2.0...v0.3.0) (2026-03-05)
+
+
+### ✨ Features
+
+* **ops:** enhance audit visibility and formalize release automation ([#7](https://github.com/K-aatech/bash-system-tools/issues/7)) ([454d989](https://github.com/K-aatech/bash-system-tools/commit/454d989854e70c4ae63ae1e522c1e557fe08124d))
+* **piler:** ✨ stable release of K'aatech Security-First deployment ([#10](https://github.com/K-aatech/bash-system-tools/issues/10)) ([1997b6e](https://github.com/K-aatech/bash-system-tools/commit/1997b6edbb7f2e9cb49af48ef05dcb416b6597be))
+
+
+### 📝 Documentation
+
+* 📝 add ShellCheck status badge to README ([#9](https://github.com/K-aatech/bash-system-tools/issues/9)) ([aa5e86c](https://github.com/K-aatech/bash-system-tools/commit/aa5e86c98ea0ba5cdea35fa7fb1a9fced8ea02ac))
+
 ## [0.2.0](https://github.com/K-aatech/bash-system-tools/compare/v0.1.0...v0.2.0) (2026-03-04)
 
 
