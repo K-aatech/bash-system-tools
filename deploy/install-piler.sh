@@ -188,13 +188,12 @@ finalize_configuration() {
 
   log_event "INFO" "Extracting configuration templates from source..."
 
-  # 2. Retrieval of specific files (Actual paths of the monolith)
+  # 2. Recovering files from the official repository paths
   cp "${src_path}/contrib/webserver/piler-nginx.conf" /etc/piler/piler-nginx.conf.dist
   cp "${src_path}/etc/sphinx.conf.dist" /etc/piler/sphinx.conf
   cp "${src_path}/util/db-mysql.sql" /etc/piler/db-mysql.sql
   cp "${src_path}/etc/manticore.conf.dist" /etc/piler/manticore.conf.dist
-  # Piler sometimes uses different names in webui, we ensure the template
-  cp "${src_path}/webui/config-site.php" /etc/piler/config-site.dist.php
+  cp "${src_path}/etc/config-site.dist.php" /etc/piler/config-site.dist.php
 
   # 3. Importing the Database Schema (Data Persistence)
   log_event "INFO" "Importing SQL schema into MariaDB..."
