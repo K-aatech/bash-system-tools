@@ -46,6 +46,11 @@ configure_deployment() {
   request_input "PILER_HOSTNAME" "Enter Piler FQDN" 0
   request_input "MYSQL_ROOT_PASS" "Enter MariaDB Root Password" 1
   request_input "PILER_USER" "Enter system/db username (default: piler)" 0
+  # Request the time zone for web visualization (Auto detect as default. e.g. America/Mexico_City)
+  local current_tz
+  current_tz=$(timedatectl show --property=Timezone --value 2> /dev/null || echo "UTC")
+  request_input "DISPLAY_TZ" "Enter Display Timezone (default: ${current_tz})" 0
+  : "${DISPLAY_TZ:="${current_tz}"}"
 
   # 3. Intelligent application password management
   if [[ -z "${MYSQL_PILER_PASS}" ]]; then
@@ -278,6 +283,30 @@ activate_services() {
   log_event "OK" "All Mail Piler services are active."
 }
 
+configure_app_timezone() {
+  print_section "Application Localization"
+
+  log_event "INFO" "Syncing Web UI timezone to ${DISPLAY_TZ}..."
+
+  # 1. Configure PHP-FPM (so that PHP's date() functions respond to the local zone)
+  local php_ini="/etc/php/${PHP_V}/fpm/php.ini"
+  local escaped_tz
+  escaped_tz=$(echo "${DISPLAY_TZ}" | sed 's/\//\\\//g')
+
+  if [[ -f "${php_ini}" ]]; then
+    # We remove the semicolon (comment) and add the zone
+    sed -i "s/^;date.timezone =.*/date.timezone = ${escaped_tz}/" "${php_ini}"
+    sed -i "s/^date.timezone =.*/date.timezone = ${escaped_tz}/" "${php_ini}"
+    manage_service "restart" "php${PHP_V}-fpm"
+  fi
+
+  # 2. Configure Piler (inject into config-site.php if necessary)
+  # Some Piler modules can read this variable directly
+  echo "\$config['TIMEZONE'] = '${DISPLAY_TZ}';" >> /etc/piler/config-site.php
+
+  log_event "OK" "Web UI aligned to ${DISPLAY_TZ} while System remains UTC."
+}
+
 # --- Main (Presentation Orchestrator) ---
 
 main() {
@@ -297,6 +326,9 @@ main() {
   build_piler_source
 
   finalize_configuration
+
+  configure_app_timezone
+
   activate_services
 
   print_section "Deployment Successful"
