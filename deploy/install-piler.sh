@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 # ==============================================================================
+# Credits & Attribution:
+# This script is a security-hardened and modular derivative of the
+# original Mail Piler installation logic provided by:
+# - Janos Suto (Official Piler Author: https://github.com/jsuto/piler)
+# - gkwurst (Gist reference: https://gist.github.com/gkwurst/87d240cf518cdbea8a78403c51f14885)
+#
+# Refactored for KISA (K'aatech Infrastructure Security Architecture)
+# standards by Alberto Chung.
+# ==============================================================================
 # Script Name: install-piler.sh
 # Description: K'aatech Security-First Deployment for Mail Piler.
 # ==============================================================================
