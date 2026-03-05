@@ -67,16 +67,38 @@ initialize_infrastructure() {
 
   mkdir -p "${WORKING_DIR}"
 
+  # Manticore Official Repository Registration
+  if ! command -v manticore > /dev/null 2>&1; then
+    log_event "INFO" "Adding Manticore Search official repository..."
+    wget -q https://repo.manticoresearch.com/manticore-repo.noarch.deb -O "${WORKING_DIR}/manticore-repo.deb"
+    dpkg -i "${WORKING_DIR}/manticore-repo.deb" > /dev/null 2>&1
+    apt-get update > /dev/null 2>&1
+  fi
+
+  # Proactive check for disk space before compilation (Prevention)
   local free_space
   free_space=$(df -m /var | awk 'NR==2 {print $4}')
   if [[ "${free_space}" -lt 1024 ]]; then
     log_event "WARN" "Low disk space on /var (${free_space}MB). Compilation might fail."
   fi
 
+  # COMPLETE DEPENDENCY ARRAY (Based on the original + PHP 8.3)
   local -a deps=(
-    wget openssl build-essential mariadb-server nginx
-    "php${PHP_V}-fpm" "php${PHP_V}-mariadb" "php${PHP_V}-cli"
-    unzip pkg-config libmariadb-dev libssl-dev libcurl4-openssl-dev)
+    # Compilation and System Tools
+    build-essential wget unzip pkg-config ca-certificates cron rsyslog sysstat
+    # Development Libraries (Crucial for ./configure)
+    libmariadb-dev libssl-dev libtre-dev libzip-dev libcurl4-openssl-dev libwrap0-dev
+    # Servers and Engines
+    mariadb-server mariadb-client nginx manticore manticore-extra
+    # Complete PHP 8.3 Stack
+    "php${PHP_V}-fpm" "php${PHP_V}-mysql" "php${PHP_V}-cli" "php${PHP_V}-cgi"
+    "php${PHP_V}-zip" "php${PHP_V}-ldap" "php${PHP_V}-gd" "php${PHP_V}-curl" "php${PHP_V}-xml"
+    # Document Processing Tools (Piler needs this to index attachments)
+    catdoc unrtf poppler-utils tnef
+    # Python Utilities
+    python3 python3-mysqldb
+  )
+
   check_dependencies "${deps[@]}"
 
   if ! id -u "${PILER_USER}" > /dev/null 2>&1; then
@@ -159,16 +181,62 @@ build_piler_source() {
 finalize_configuration() {
   print_section "System Integration"
 
-  mkdir -p /etc/piler
-  chown "${PILER_USER}:${PILER_USER}" /etc/piler
-  chmod 755 /etc/piler
+  # 1. Secure directories and file permissions (Security by Design)
+  local src_path="${WORKING_DIR}/piler-master"
+  mkdir -p /etc/piler /var/piler/www /var/run/piler
+  chown "${PILER_USER}:${PILER_USER}" /var/run/piler
 
+  log_event "INFO" "Extracting configuration templates from source..."
+
+  # 2. Retrieval of specific files (Actual paths of the monolith)
+  cp "${src_path}/contrib/webserver/piler-nginx.conf" /etc/piler/piler-nginx.conf.dist
+  cp "${src_path}/etc/sphinx.conf.dist" /etc/piler/sphinx.conf
+  cp "${src_path}/util/db-mysql.sql" /etc/piler/db-mysql.sql
+  cp "${src_path}/etc/manticore.conf.dist" /etc/piler/manticore.conf.dist
+  # Piler sometimes uses different names in webui, we ensure the template
+  cp "${src_path}/webui/config-site.php" /etc/piler/config-site.dist.php
+
+  # 3. Importing the Database Schema (Data Persistence)
+  log_event "INFO" "Importing SQL schema into MariaDB..."
+  if MYSQL_PWD="${MYSQL_ROOT_PASS}" mysql -u root piler < /etc/piler/db-mysql.sql; then
+    log_event "OK" "Database schema imported successfully."
+  else
+    log_event "WARN" "SQL import failed. Database might be incomplete."
+  fi
+
+  # 4. Web UI Configuration Files
+  log_event "INFO" "Finalizing PHP web configuration..."
+  local php_conf="/etc/piler/config-site.php"
+  cp /etc/piler/config-site.dist.php "${php_conf}"
+
+  sed -i -e "s%HOSTNAME%${PILER_HOSTNAME}%g" \
+    -e "s%MYSQL_PASSWORD%${MYSQL_PILER_PASS}%g" "${php_conf}"
+
+  # Inject extra variables like the monolith does
+  {
+    echo "\$config['SERVER_ID'] = 0;"
+    echo "\$config['SPHINX_VERSION'] = 331;"
+    echo "\$config['ARCHIVE_HOST'] = '${PILER_HOSTNAME}';"
+  } >> "${php_conf}"
+
+  # 5. Nginx Configuration with dynamic PHP-FPM socket detection (Integration with deploy-utils)
   local php_socket
   php_socket=$(get_php_fpm_socket)
+  local nginx_tmp="/tmp/piler-nginx.conf"
+
+  if [[ -f /etc/piler/piler-nginx.conf.dist ]]; then
+    sed -e "s%PILER_HOST%${PILER_HOSTNAME}%g" \
+      -e "s%PHP_FPM_SOCKET%${php_socket}%g" \
+      /etc/piler/piler-nginx.conf.dist > "${nginx_tmp}"
+    setup_nginx_vhost "piler.conf" "${nginx_tmp}"
+    rm -f "${nginx_tmp}"
+  else
+    log_event "CRIT" "Nginx template missing from source."
+  fi
 
   log_event "INFO" "Configuring Mail Piler environment..."
 
-  # 1. Encryption Configuration (Security by Design)
+  # 6. Encryption & Permissions (Security by Design)
   if [[ ! -f /etc/piler/piler.key ]]; then
     dd if=/dev/urandom bs=56 count=1 of=/etc/piler/piler.key 2> /dev/null
     chown "${PILER_USER}:${PILER_USER}" /etc/piler/piler.key
@@ -176,20 +244,9 @@ finalize_configuration() {
     log_event "OK" "Unique encryption key generated."
   fi
 
-  # 2. Integration with Nginx (via deploy-utils)
-  # Replace variables in the Piler template and deploy the Nginx config atomically with validation.
-  local nginx_tmp="/tmp/piler-nginx.conf"
-  sed -e "s%PILER_HOST%${PILER_HOSTNAME}%g" \
-    -e "s%PHP_FPM_SOCKET%${php_socket}%g" \
-    /etc/piler/piler-nginx.conf.dist > "${nginx_tmp}"
-
-  setup_nginx_vhost "piler.conf" "${nginx_tmp}"
-  rm -f "${nginx_tmp}"
-
-  # 3. Configuration of Manticore/Sphinx (Search Engine)
+  # 7. Configuration of Manticore/Sphinx (Search Engine)
   log_event "INFO" "Configuring Manticore Search index..."
   cp /etc/piler/manticore.conf.dist /etc/piler/manticore.conf
-
   # ADJUSTMENT: Ensure the service can read your config file and that it has the correct permissions. This is crucial for security and functionality.
   chown "${PILER_USER}:${PILER_USER}" /etc/piler/manticore.conf
   chmod 644 /etc/piler/manticore.conf
@@ -203,13 +260,17 @@ finalize_configuration() {
 
 activate_services() {
   print_section "Service Activation"
-
-  # Enable and start core services
-  local -a services=("piler" "piler-smtp" "pilersearch")
+  log_event "INFO" "Linking systemd units..."
+  # Create necessary symbolic links for systemd to recognize the services installed by 'make install'
+  ln -sf /usr/libexec/piler/pilersearch.service /etc/systemd/system/
+  ln -sf /usr/libexec/piler/piler.service /etc/systemd/system/
+  ln -sf /usr/libexec/piler/piler-smtp.service /etc/systemd/system/
 
   # Reload systemd to detect new unit files from 'make install'
   systemctl daemon-reload
 
+  # Enable and start core services
+  local -a services=("piler" "piler-smtp" "pilersearch")
   for svc in "${services[@]}"; do
     manage_service "enable" "${svc}"
     manage_service "start" "${svc}"
