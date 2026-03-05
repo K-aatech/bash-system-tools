@@ -31,7 +31,7 @@ print_section() {
 fetch_host_metadata() {
   # Define suite global variables for data export
   # shellcheck disable=SC2034
-  KISA_HOSTNAME=$(hostname -f 2> /dev/null || hostname || echo "localhost")
+  KISA_HOSTNAME=$(hostname -s 2> /dev/null || hostname || echo "localhost")
   # shellcheck disable=SC2034
   KISA_UPTIME=$(uptime -p 2> /dev/null || echo "unknown")
   # shellcheck disable=SC2034
