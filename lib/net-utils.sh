@@ -146,20 +146,30 @@ apply_nginx_hardening() {
     log_event "WARN" "Nginx is installed but not running. Proceeding with config injection only."
   fi
 
+  # 2. Generate DHParams if they do not exist (Extra security against Logjam)
+  local dh_file="/etc/nginx/dhparam.pem"
+  if [[ ! -f "${dh_file}" ]]; then
+    log_event "INFO" "Generating DHParams (2048 bits). This may take a minute..."
+    openssl dhparam -out "${dh_file}" 2048 > /dev/null 2>&1
+  fi
+
+  # 3. Policy generation (HSTS, TLS 1.2+, Ciphers)
   local policy_file="/etc/nginx/conf.d/kisa-hardening.conf"
   log_event "INFO" "Injecting KISA Security Policy into Nginx..."
 
-  # 2. Policy generation (HSTS, TLS 1.2+, Ciphers)
   cat << EOF > "${policy_file}"
-# KISA Security Baseline
+# KISA Security Baseline - Hardened Nginx
 ssl_protocols TLSv1.2 TLSv1.3;
 ssl_prefer_server_ciphers on;
 ssl_session_timeout 1d;
 ssl_session_cache shared:SSL:10m;
+ssl_dhparam ${dh_file};
 
+# Security Headers
 add_header X-Frame-Options "SAMEORIGIN" always;
 add_header X-XSS-Protection "1; mode=block" always;
 add_header X-Content-Type-Options "nosniff" always;
+add_header Referrer-Policy "no-referrer-when-downgrade" always;
 add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 EOF
 
@@ -169,8 +179,13 @@ EOF
 # Detects and configures SSL/TLS for Nginx in an agnostic way
 configure_tls_edge() {
   local domain="${1}"
-  local mode="${2:-manual}"     # manual | certbot
-  local challenge="${3:-nginx}" # nginx | standalone | dns
+  local email="${2}"
+  local mode="${3:-manual}"       # manual | certbot
+  local challenge="${4:-nginx}"   # nginx | standalone | dns
+  local use_staging="${5:-false}" # Staging mode
+
+  local staging_flag=""
+  [[ "${use_staging}" == "true" ]] && staging_flag="--staging"
 
   # 1. Use of check_dependencies (KISA Standard)
   local -a pkg_deps=()
@@ -183,20 +198,27 @@ configure_tls_edge() {
   # 2. TLS Orchestration
   case "${mode}" in
     "certbot")
-      log_event "INFO" "Requesting Let's Encrypt cert via ${challenge} challenge..."
+      log_event "INFO" "Requesting Let's Encrypt cert for ${domain}. (Staging: ${use_staging})..."
 
-      local certbot_cmd="certbot --${challenge} -d ${domain} --non-interactive --agree-tos -m admin@${domain}"
+      # El comando ahora incluye staging y la autorenovación es automática con el plugin de certbot
+      local certbot_cmd="certbot --${challenge} -d ${domain} --non-interactive --agree-tos -m ${email} ${staging_flag}"
 
       if eval "${certbot_cmd}"; then
-        log_event "OK" "TLS certificate obtained successfully."
+        log_event "OK" "TLS certificate process successful."
+        # Verificación de autorenovación (dry-run rápido)
+        certbot renew --dry-run > /dev/null 2>&1 && log_event "OK" "Auto-renewal verified."
       else
-        log_event "CRIT" "Certbot failed. Check DNS propagation or port 80/443."
+        log_event "CRIT" "Certbot failed. Check your challenge settings, DNS or firewall (ports 80/443)."
         return 1
       fi
       ;;
     "manual")
-      log_event "INFO" "Manual mode: Placeholder for custom .crt/.key logic."
-      # Implementation of certificate path validation
+      log_event "WARN" "MANUAL MODE: Administrator intervention required."
+      log_event "INFO" "Remediation instructions:"
+      log_event "INFO" " 1. Place your certificate in: /etc/piler/ssl/piler.crt"
+      log_event "INFO" " 2. Enter your private key in: /etc/piler/ssl/piler.key"
+      log_event "INFO" " 3. Update the Nginx Vhost to point to these routes."
+      mkdir -p /etc/piler/ssl
       ;;
   esac
 }
