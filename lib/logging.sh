@@ -1,17 +1,34 @@
 # shellcheck shell=bash
 # ==============================================================================
-# Script Name: logging.sh
-# This file is intended to be sourced, not executed directly.
-# Description: K'aatech Bash System Tools - Core Logging Library
-# Global Vars: LOG_FILE, MAX_LOG_FILES, CLR_*
+# LIBRARY: logging.sh
+# DESCRIPTION: Core logging engine with color support, persistence, and rotation.
+# VERSION: 1.2.1
+# STANDARDS: GBSG Compliant | K'aatech Baseline v1.2.1
 # ==============================================================================
 
 # Security and Portability
 set -euo pipefail
 IFS=$'\n\t'
 
-# --- Color Configuration ---
-# Only define colors if the output is a terminal (attribution to v1.1.0)
+# --- ENVIRONMENT GUARD ---
+
+if [[ -z "${BASH_VERSINFO:-}" || "${BASH_VERSINFO[0]}" -lt 4 ]]; then
+  printf "[CRIT] This library requires Bash >= 4.x\n" >&2
+  exit 1
+fi
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  printf "[CRIT] This file must be sourced, not executed.\n" >&2
+  exit 1
+fi
+
+# --- CONFIGURATION & CONSTANTS ---
+
+# Default persistence settings
+KISA_LOG_FILE="${LOG_FILE:-/tmp/kaatech_report.log}"
+KISA_MAX_LOGS="${MAX_LOG_FILES:-5}"
+
+# Color Palette (TrueColor 24-bit)
 if [[ -t 2 ]]; then
   readonly CLR_RESET='\033[38;2;220;220;220m'
   readonly CLR_BLUE='\033[38;2;21;133;181m'
@@ -30,20 +47,19 @@ else
   readonly USE_VISUAL=0
 fi
 
-# Global variables with default values ​​(Governance)
-# Readonly is used for post-initialization constants
-LOG_FILE="${LOG_FILE:-/tmp/kaatech_report.log}"
-MAX_LOG_FILES="${MAX_LOG_FILES:-5}"
+# --- PUBLIC API ---
 
+# @description Dispatches a formatted log event to stderr and persistent file.
+# @param $1 Severity level (INFO, OK, WARN, CRIT).
+# @param $2 Message string.
 log_event() {
   local level="${1:-INFO}"
   local message="${2:-No message provided}"
-  local timestamp color label visual_signaling log_dir
+  local timestamp color label visual_signaling target_dir
   # Persistence (Handling unbound variables gracefully)
-  local target_file="${LOG_FILE:-/tmp/kaatech.log}"
-  local target_dir="${log_dir:-/tmp}"
 
   timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+  target_dir=$(dirname "${KISA_LOG_FILE}")
 
   case "${level^^}" in
     "INFO")
@@ -76,43 +92,44 @@ log_event() {
   # Fallback: Disable emoji if not in terminal to avoid encoding issues in files/pipes
   [[ ${USE_VISUAL} -eq 0 ]] && visual_signaling=""
 
-  # Output to stderr
+  # 1. Terminal Output (stderr)
   printf "%b%s%s%b %b%s - %b%b\n" \
     "${color}" "${visual_signaling}" "${label}" "${CLR_OFF}" \
     "${CLR_RESET}" "${timestamp}" "${message}" "${CLR_OFF}" >&2
 
-  # Persistence (We cleaned ANSI escape codes for the flat log file)
-  if [[ -w "${target_file}" || (! -f "${target_file}" && -w "${target_dir}") ]]; then
-    # shellcheck disable=SC2001
+  # 2. File Persistence (Sanitized) (We cleaned ANSI escape codes for the flat log file)
+  if [[ -d "${target_dir}" && -w "${target_dir}" ]]; then
     local clean_msg
-    clean_msg=$(echo -e "${message}" | sed 's/\x1b\[[0-9;]*m//g')
-    printf "[%s] %s - %s\n" "${level^^}" "${timestamp}" "${clean_msg}" >> "${target_file}" 2> /dev/null || true
+    # shellcheck disable=SC2001
+    clean_msg=$(printf "%b" "${message}" | sed 's/\x1b\[[0-9;]*m//g')
+    printf "[%s] %s - %s\n" "${level^^}" "${timestamp}" "${clean_msg}" >> "${KISA_LOG_FILE}" 2> /dev/null || true
   fi
 }
 
+# @description Manages deterministic log rotation to prevent disk exhaustion.
 rotate_logs() {
   local log_dir i next
-  log_dir=$(dirname "${LOG_FILE}")
+  log_dir=$(dirname "${KISA_LOG_FILE}")
 
-  [[ ! -w "${log_dir}" ]] && return 0
-  [[ ! -f "${LOG_FILE}" ]] && return 0
+  [[ ! -d "${log_dir}" || ! -w "${log_dir}" ]] && return 0
+  [[ ! -f "${KISA_LOG_FILE}" ]] && return 0
 
   # Delete the oldest log if it exists to prevent overflow
-  [[ -f "${LOG_FILE}.${MAX_LOG_FILES}" ]] && rm -f "${LOG_FILE}.${MAX_LOG_FILES}"
+  [[ -f "${KISA_LOG_FILE}.${KISA_MAX_LOGS}" ]] && rm -f "${KISA_LOG_FILE}.${KISA_MAX_LOGS}"
 
   # Manual deterministic rotation
-  for ((i = MAX_LOG_FILES - 1; i >= 1; i--)); do
+  for ((i = KISA_MAX_LOGS - 1; i >= 1; i--)); do
     next=$((i + 1))
-    if [[ -f "${LOG_FILE}.${i}" ]]; then
-      mv -f "${LOG_FILE}.${i}" "${LOG_FILE}.${next}"
+    if [[ -f "${KISA_LOG_FILE}.${i}" ]]; then
+      mv -f "${KISA_LOG_FILE}.${i}" "${KISA_LOG_FILE}.${next}"
     fi
   done
 
   # Atomically move current to .1
-  if [[ -f "${LOG_FILE}" ]]; then
-    mv -f "${LOG_FILE}" "${LOG_FILE}.1"
+  if [[ -f "${KISA_LOG_FILE}" ]]; then
+    mv -f "${KISA_LOG_FILE}" "${KISA_LOG_FILE}.1"
   fi
 
-  # Create new log with secure permissions from birth
-  (umask 027 && touch "${LOG_FILE}")
+  # Initialize new log with secure permissions (0640)
+  (umask 027 && touch "${KISA_LOG_FILE}")
 }
