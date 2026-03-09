@@ -1,21 +1,39 @@
 # shellcheck shell=bash
 # ==============================================================================
-# Script Name:  net-utils.sh
-# This file is intended to be sourced, not executed directly.
-# Description:  K'aatech Network Audit Library - "Fierro-to-Cloud" Perspective.
-# Standards:    GBSG Compliant | K'aatech Baseline v1.1.0
+# LIBRARY: net-utils.sh
+# DESCRIPTION: K'aatech Network Audit & Security Library (Fierro-to-Cloud).
+# VERSION: 1.2.1
+# STANDARDS: GBSG Compliant | K'aatech Baseline v1.2.1
 # ==============================================================================
 
 set -euo pipefail
 IFS=$'\n\t'
 
-# Fallback logging (Dependency check)
-if ! command -v log_event > /dev/null 2>&1; then
-  log_event() { printf "[%s] %s\n" "${1}" "${*:2}" >&2; }
+# --- ENVIRONMENT GUARD ---
+
+if [[ -z "${BASH_VERSINFO:-}" || "${BASH_VERSINFO[0]}" -lt 4 ]]; then
+  printf "[CRIT] This library requires Bash >= 4.x\n" >&2
+  exit 1
 fi
 
-# --- Block 1: Local Context (Discovery) ---
-# Defensive initialization to avoid 'set -u' errors
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  printf "[CRIT] This file must be sourced, not executed.\n" >&2
+  exit 1
+fi
+
+# Fallback logging
+if ! command -v log_event > /dev/null 2>&1; then
+  log_event() {
+    local level="${1}"
+    shift
+    printf "[%s] %s\n" "${level}" "$*" >&2
+  }
+fi
+
+# --- PUBLIC API: NETWORK DISCOVERY ---
+
+# @description Collects local network interface and routing metadata.
+# @stdout Exports KISA_IFACE, KISA_PRIMARY_IP, KISA_NETMASK, KISA_GW.
 fetch_network_metadata() {
   KISA_IFACE=""
   KISA_PRIMARY_IP="N/A"
@@ -42,15 +60,19 @@ fetch_network_metadata() {
   fi
 }
 
+# @description Collects DNS nameservers from the local resolver.
+# @stdout Exports KISA_DNS.
 fetch_dns_metadata() {
   # xargs removes extra spaces and line breaks, turning the list into a single line
   # shellcheck disable=SC2034
   KISA_DNS=$(grep '^nameserver' /etc/resolv.conf 2> /dev/null | awk '{print $2}' | xargs || echo "None")
 }
 
-# --- Block 2: Vitality (Action-Oriented) ---
+# --- PUBLIC API: VITALITY & PERFORMANCE ---
 
-check_internet_connectivity() {
+# @description Verifies outbound internet access via ICMP.
+# @return 0 on success, 1 on failure.
+verify_internet_connectivity() {
   log_event "INFO" "Checking internet connectivity (Target: 8.8.8.8)..."
   if ping -c 1 -W 2 8.8.8.8 > /dev/null 2>&1; then
     log_event "OK" "Internet access verified."
@@ -61,36 +83,7 @@ check_internet_connectivity() {
   fi
 }
 
-# --- Block 3: LMetrics (Action-Oriented / Reports) ---
-
-audit_listening_ports() {
-  log_event "INFO" "Auditing Open and Active Ports (LISTEN)..."
-
-  # GBSG: Use ss (iproute2) as it is the modern standard for socket statistics, providing more accurate and detailed information than netstat.
-  if ! command -v ss > /dev/null 2>&1; then
-    log_event "WARN" "ss command not found. Skipping port audit."
-    return 0
-  fi
-
-  # Capture TCP/UDP ports in LISTEN state
-  # Format: Protocol | Port | Service/Process
-  # We use a temporary variable to capture the output and avoid breaking the set -e pipe.
-  local port_data
-  port_data=$(ss -tunlpH 2> /dev/null) || true
-
-  if [[ -n "${port_data}" ]]; then
-    log_event "INFO" "Port Mapping (TCP/UDP LISTEN):"
-    while read -r line; do
-      # We clean spaces and format the output to be more readable, showing protocol, port, and service/process name.
-      local fmt_line
-      fmt_line=$(echo "${line}" | awk '{printf "  - %-5s %-10s %-20s", $1, $5, $7}')
-      log_event "INFO" "${fmt_line}"
-    done <<< "${port_data}"
-  else
-    log_event "OK" "No open listening ports detected or access denied."
-  fi
-}
-
+# @description Audits multi-cloud provider latency for performance baseline.
 audit_multi_cloud_latency() {
   # Defining destinations with a focus on global and regional targets for a "Fierro-to-Cloud" perspective
   local -A targets=(
@@ -118,9 +111,41 @@ audit_multi_cloud_latency() {
   done
 }
 
-# --- Block 4: Edge Security & TLS (Hardening) ---
+# --- PUBLIC API: SOCKET & PORT AUDIT ---
 
-check_port_availability() {
+# @description Lists active listening ports and associated processes.
+audit_listening_sockets() {
+  log_event "INFO" "Auditing Open and Active Ports (LISTEN)..."
+
+  # GBSG: Use ss (iproute2) as it is the modern standard for socket statistics, providing more accurate and detailed information than netstat.
+  if ! command -v ss > /dev/null 2>&1; then
+    log_event "WARN" "ss command not found. Skipping port audit."
+    return 0
+  fi
+
+  # Capture TCP/UDP ports in LISTEN state
+  # Format: Protocol | Port | Service/Process
+  # We use a temporary variable to capture the output and avoid breaking the set -e pipe.
+  local port_data
+  port_data=$(ss -tunlpH 2> /dev/null) || true
+
+  if [[ -n "${port_data}" ]]; then
+    log_event "INFO" "Port Mapping (TCP/UDP LISTEN):"
+    while read -r line; do
+      # We clean spaces and format the output to be more readable, showing protocol, port, and service/process name.
+      local fmt_line
+      fmt_line=$(echo "${line}" | awk '{printf "  - %-5s %-10s %-20s", $1, $5, $7}')
+      log_event "INFO" "${fmt_line}"
+    done <<< "${port_data}"
+  else
+    log_event "OK" "No open listening ports detected or access denied."
+  fi
+}
+
+# @description Checks if a specific port is active in the local socket stack.
+# @param $1 Port number.
+# @return 0 if listening, 1 otherwise.
+verify_port_activity() {
   local port="${1}"
   log_event "INFO" "Validating if port ${port} is open in local firewall..."
 
@@ -134,6 +159,10 @@ check_port_availability() {
   fi
 }
 
+# --- PUBLIC API: EDGE SECURITY & TLS ---
+
+# @description Injects security headers and hardened SSL parameters into Nginx.
+# @exit 1 If Nginx is not installed.
 # Injects security headers and hardened SSL parameters
 apply_nginx_hardening() {
   # 1. Security Guard: Is it Nginx and is it active?
@@ -176,7 +205,12 @@ EOF
   log_event "OK" "Security policy applied at ${policy_file}."
 }
 
-# Detects and configures SSL/TLS for Nginx in an agnostic way
+# @description Manages TLS certificate acquisition and configuration.
+# @param $1 Domain name.
+# @param $2 Admin email.
+# @param $3 Mode (manual | certbot).
+# @param $4 Challenge type (nginx | standalone | dns).
+# @param $5 Use staging (true | false).
 configure_tls_edge() {
   local domain="${1}"
   local email="${2}"
