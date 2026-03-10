@@ -17,15 +17,15 @@ Variables globales que permiten la inyección de parámetros.
 
 ### `KISA_LOG_FILE`
 
-**Descripción:** Define la ruta absoluta del archivo de registro.
-**Inyección:** Se puede personalizar definiendo `LOG_FILE` antes de cargar la librería.
-**Default:** `/tmp/kaatech_report.log`
+- **Descripción:** Define la ruta absoluta del archivo de registro.
+- **Inyección:** Se puede personalizar definiendo `LOG_FILE` antes de cargar la librería.
+- **Default:** `/tmp/kaatech_report.log`
 
 ### `KISA_MAX_LOGS`
 
-**Descripción:** Número máximo de archivos históricos para la rotación.
-**Inyección:** Se puede personalizar mediante `MAX_LOG_FILES`.
-**Default:** `5`
+- **Descripción:** Número máximo de archivos históricos para la rotación.
+- **Inyección:** Se puede personalizar mediante `MAX_LOG_FILES`.
+- **Default:** `5`
 
 ---
 
