@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
-
-# Purpose: Validates the structural integrity of the repository against the Governance Baseline.
-# Inputs: None.
-# Outputs: Log messages to stdout/stderr.
-# Dependencies: find
-# Exit codes:
-#  0 - Success
-#  1 - Structural or Permission violation
-# Documentation: docs/governance-baseline.md
-# Standards: K'aatech Engineering v1.1.0 / Google Shell Style Guide
+# ==============================================================================
+# SCRIPT: validate-structure.sh
+# DESCRIPTION: Validates repository integrity against K'aatech Governance.
+# STANDARDS: K'aatech Engineering v1.2.1 / Google Shell Style Guide
+# ==============================================================================
 
 set -euo pipefail
 IFS=$'\n\t'
+
+# --- Environment & Globals ---
+# x-release-please-start-version
+SUITE_VERSION="0.1.0"
+# x-release-please-end-version
+readonly SUITE_VERSION
 
 # --- Bootstrap ---
 # We securely determine the script directory and set up paths to libraries with fail-fast logic.
@@ -19,36 +20,35 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
 LIB_LOGGING="${SCRIPT_DIR}/../lib/logging.sh"
 readonly LIB_LOGGING
-LIB_UTILS="${SCRIPT_DIR}/../lib/sys-utils.sh"
-readonly LIB_UTILS
+LIB_SYS_UTILS="${SCRIPT_DIR}/../lib/sys-utils.sh"
+readonly LIB_SYS_UTILS
 
-# Validation of the existence of core components with explicit error handling
-# Shellcheck source=../lib/logging.sh
+# 1. Load Core Logging
 if [[ -f "$LIB_LOGGING" ]]; then
-  # shellcheck source=/dev/null
+  # shellcheck source=../lib/logging.sh
   source "$LIB_LOGGING"
 else
-  echo "[ERROR] Logging library not found at $LIB_LOGGING" >&2
+  printf "[ERROR] Logging library not found at %s\n" "$LIB_LOGGING" >&2
   exit 1
 fi
 
-# It allows overwriting from the environment, e.g.: log_dir=/var/log/custom ./script.sh
-export log_dir="${log_dir:-./logs}"
-LOG_FILE="${log_dir}/$(basename "$0" .sh).log"
+# 2. Configure Persistence (Namespace KISA)
+# It allows overwriting from the environment, e.g.: LOG_FILE=/var/log/custom ./script.sh
+export LOG_FILE="${LOG_FILE:-./logs/structure-audit.log}"
 export LOG_FILE
-# Asegurar que el directorio de logs existe antes de iniciar
-[[ ! -d "${log_dir}" ]] && mkdir -p "${log_dir}"
+# Ensure the logs directory exists before starting
+[[ ! -d "${LOG_FILE}" ]] && mkdir -p "${LOG_FILE}"
 
-# Shellcheck source=../lib/sys-utils.sh
-if [[ -f "$LIB_UTILS" ]]; then
-  # shellcheck source=/dev/null
-  source "$LIB_UTILS"
+# 3. Load System Utilities
+if [[ -f "$LIB_SYS_UTILS" ]]; then
+  # shellcheck source=../lib/sys-utils.sh
+  source "$LIB_SYS_UTILS"
 else
-  log_event "CRIT" "Utility library not found at $LIB_UTILS"
+  log_event "CRIT" "Utility library not found at $LIB_SYS_UTILS"
   exit 1
 fi
 
-# --- Configuration (Constants) ---
+# --- Configuration (Governance Baseline) ---
 readonly REQUIRED_DIRS=(
   ".github" "audit" "deploy" "hardening" "maintenance"
   "scripts" "test/lib" "test/unit" "lib" "docs"
@@ -66,10 +66,10 @@ readonly REQUIRED_FILES=(
 readonly EXEC_REQUIRED_ZONES=("scripts" "test/unit" "audit" "deploy" "hardening" "maintenance")
 readonly EXEC_PROHIBITED_ZONES=("lib" "test/lib" "docs")
 
-# --- Functions ---
+# --- Audit Functions ---
 
-# Description: Verifies mandatory files and directories exist.
-validate_existence() {
+# @description Validates presence of mandatory structure.
+verify_structure_existence() {
   local exit_code=0
   log_event "INFO" "Verifying mandatory directories and normative files..."
 
@@ -91,10 +91,10 @@ validate_existence() {
   return "$exit_code"
 }
 
-# Description: Audits files for correct execution bits using dynamic zones.
+# @description Audits execution bits (POSIX and Windows-Git-Index).
 # 1. Zone: Must be executable (+x)
 # 2. Zone: Must NOT be executable (-x)
-validate_executability() {
+verify_execution_policy() {
   local exit_code=0
   local non_execs=""
   local illegal_execs=""
@@ -166,8 +166,8 @@ validate_executability() {
   return "$exit_code"
 }
 
-# Description: Ensures no .env files are present in the workspace.
-validate_environment_safety() {
+# @description Ensures sensitive environment files are not leaked.
+verify_leak_prevention() {
   if [[ -f ".env" ]]; then
     log_event "CRIT" "Local '.env' file detected. This is a risk in CI/CD pipelines."
     log_event "INFO" "Remediation: rm .env && git rm --cached .env (if tracked)"
@@ -178,16 +178,16 @@ validate_environment_safety() {
 
 # --- Main ---
 main() {
-  log_event "START" "Initiating structural governance audit (v1.1.0)..."
+  log_event "START" "Initiating structural governance audit v${SUITE_VERSION}..."
 
   # Delegated dependency check to sys-utils.sh
-  check_dependencies "find"
+  verify_binary_existence "find" "git" "sort"
 
   local final_status=0
 
-  validate_existence || final_status=1
-  validate_executability || final_status=1
-  validate_environment_safety || final_status=1
+  verify_structure_existence || final_status=1
+  verify_execution_policy || final_status=1
+  verify_leak_prevention || final_status=1
 
   if [[ "$final_status" -eq 0 ]]; then
     log_event "OK" "✅ Repository complies with the governance contract."
