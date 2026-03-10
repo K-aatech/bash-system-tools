@@ -1,17 +1,31 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Script Name: piler-hardening.sh
-# Description: Post-installation Security Hardening for Mail Piler.
+# SCRIPT: piler-hardening.sh
+# DESCRIPTION: Post-installation Security Hardening for Mail Piler.
+# STANDARDS: GBSG Compliant | K'aatech Baseline v1.2.1
 # ==============================================================================
 
 set -euo pipefail
 IFS=$'\n\t'
 
-# --- Bootstrap ---
-LIB_LOGGING="$(dirname "$0")/../lib/logging.sh"
-LIB_UTILS="$(dirname "$0")/../lib/sys-utils.sh"
-LIB_NET="$(dirname "$0")/../lib/net-utils.sh"
+# --- Environment & Globals ---
+# x-release-please-start-version
+SUITE_VERSION="0.1.0"
+# x-release-please-end-version
+readonly SUITE_VERSION
 
+# --- Bootstrap ---
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
+readonly LIB_LOGGING="${SCRIPT_DIR}/../lib/logging.sh"
+readonly LIB_UTILS="${SCRIPT_DIR}/../lib/sys-utils.sh"
+readonly LIB_NET="${SCRIPT_DIR}/../lib/net-utils.sh"
+
+# 1. Configure persistence (KISA Namespace)
+export LOG_FILE="${LOG_FILE:-./logs/piler-hardening.log}"
+[[ ! -d "$(dirname "$LOG_FILE")" ]] && mkdir -p "$(dirname "$LOG_FILE")"
+
+# 2. Secure library loading
 # shellcheck source=../lib/logging.sh
 [[ -f "${LIB_LOGGING}" ]] && source "${LIB_LOGGING}"
 # shellcheck source=../lib/sys-utils.sh
@@ -21,92 +35,68 @@ LIB_NET="$(dirname "$0")/../lib/net-utils.sh"
 
 # --- Logic ---
 
+# @description Runs pre-flight checks to ensure the environment is ready for hardening.
+# @no-params
+# @return 0 on success, exit 1 on missing dependencies or privileges.
 run_preflight_checks() {
   print_section "Pre-flight Security Audit"
 
-  ensure_root
-  fetch_host_metadata
+  require_root_privileges
+  fetch_system_metadata
 
-  log_event "INFO" "Targeting: ${KISA_HOSTNAME}"
+  log_event "INFO" "Targeting: ${KISA_HOSTNAME} (${KISA_DISTRO})"
 
-  # Verify that Piler is installed (find the main binary)
-  if [[ ! -f "/usr/bin/piler" ]]; then
-    log_event "CRIT" "Mail Piler binary not found. Please run install-piler.sh first."
-    exit 1
-  fi
+  # 1. Elastic binary validation (searching in sbin and bin)
+  log_event "INFO" "Searching for piler binaries in system PATH..."
+  verify_binary_existence "piler"
 
-  # Verify basic ports
-  check_port_availability 80  # HTTP (For challenge)
-  check_port_availability 443 # HTTPS (For service)
+  # 2. Validation of the Systemd service (the real indicator of success)
+  log_event "INFO" "Validating Mail Piler service stack..."
+  verify_service_status "piler.service" "piler-smtp.service" "pilersearch.service"
+
+  log_event "OK" "Mail Piler installation and service stack detected."
+
+  # 3. Verify port activity (using net-utils API)
+  log_event "INFO" "Verifying core service ports..."
+  verify_port_activity 80 443 25 # HTTP (For challenge), HTTPS (For service) and SMTP (Vital for receiving emails)
 }
 
+# @description Orchestrates network security and delegates TLS lifecycle to net-utils.
+# @no-params
+# @return 0 on success, 1 on TLS failure.
 apply_network_security() {
   print_section "Edge Security & TLS"
 
-  # 1. Nginx Configuration (Headers and Protocols)
+  # 1. Nginx Configuration (Headers and Protocols, defined in net-utils/sys-utils)
   apply_nginx_hardening
 
-  # 2. TLS/SSL Management
-  printf "❓ [PROMPT] Use Certbot for Let's Encrypt? (y/n): "
-  read -r use_certbot
-
-  if [[ "${use_certbot,,}" != "y" ]]; then
-    # Logic Manual explained to the user
-    configure_tls_edge "N/A" "N/A" "manual"
-    return 0
+  # 2. TLS/SSL Management (delegated to lib/net-utils.sh)
+  if ! configure_tls_edge; then
+    log_event "CRIT" "Network security phase failed during TLS configuration."
+    return 1
   fi
 
-  # Capture of required data
-  request_input "PILER_FQDN" "Enter FQDN (e.g. piler.domain.com)" 0
-  request_input "ADMIN_EMAIL" "Enter your email address for important account notifications" 0
-
-  # Challenge descriptors
-  echo -e "\nSelect Challenge Type:"
-  echo "1) nginx      - (Default) Best if Nginx is already running."
-  echo "2) standalone - Use a temporary server (requires free port 80)."
-  echo "3) dns        - Best for wildcards or restricted firewalls."
-
-  printf "\nSelection [1-3]: "
-  read -r ch_choice
-
-  local sel_ch
-  case $ch_choice in
-    2) sel_ch="standalone" ;;
-    3) sel_ch="dns" ;;
-    *) sel_ch="nginx" ;;
-  esac
-
-  # Opción de Staging
-  printf "❓ [PROMPT] Enable Staging mode (Dry-run)? (y/n): "
-  read -r is_staging
-  local staging_val="false"
-  [[ "${is_staging,,}" == "y" ]] && staging_val="true"
-
-  configure_tls_edge "${PILER_FQDN}" "${ADMIN_EMAIL}" "certbot" "${sel_ch}" "${staging_val}"
-  #else
-  #log_event "INFO" "Skipping automated TLS. Ensure manual certs are in /etc/piler/ssl/"
-  #fi
+  log_event "OK" "Network security and TLS stack configured successfully."
 }
 
+# @description Validates the final state of the hardening process.
+# @no-params
+# @return 0 on success, exit 1 on config failure.
 finalize_hardening() {
   print_section "Hardening Verification"
 
-  log_event "INFO" "Testing Nginx configuration syntax..."
-  if nginx -t > /dev/null 2>&1; then
-    log_event "OK" "Nginx configuration is valid. Reloading..."
-    manage_service "reload" "nginx"
+  if safe_service_config_apply "nginx" "nginx -t" "reload"; then
+    log_event "OK" "Security Hardening Suite completed for ${KISA_HOSTNAME}."
   else
-    log_event "CRIT" "Nginx configuration test failed! Manual intervention required."
+    log_event "CRIT" "Hardening process failed at the final verification stage."
     exit 1
   fi
-
-  log_event "OK" "Security Hardening Suite completed for ${KISA_HOSTNAME}."
 }
 
 # --- Main ---
 
 main() {
-  print_section "K'aatech Security Hardening Suite"
+  print_section "K'aatech Security Hardening Suite v${SUITE_VERSION}"
 
   run_preflight_checks
   apply_network_security

@@ -39,7 +39,8 @@
         "scripts",
         "lib",
         "audit",
-        "deploy"
+        "deploy",
+        "hardening"
     ],
     "markdown.validate.enabled": true
 }

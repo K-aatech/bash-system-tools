@@ -13,6 +13,8 @@
   - [🔐 Dominio: Seguridad Perimetral y TLS](#-dominio-seguridad-perimetral-y-tls)
     - [`apply_nginx_hardening`](#apply_nginx_hardening)
     - [`configure_tls_edge`](#configure_tls_edge)
+  - [🏗️ Dominio: Orquestación de Servicios (*Edge*)](#️-dominio-orquestación-de-servicios-edge)
+    - [`safe_service_config_apply`](#safe_service_config_apply)
 
 ---
 
@@ -125,18 +127,18 @@ audit_listening_sockets
 
 **Nivel de Riesgo:** Bajo (Verificación)
 
-| **Atributo**         | **Detalles**                                                   |
-| -------------------- | -------------------------------------------------------------- |
-| **Propósito**        | Validar si un puerto específico está activo en el stack local. |
-| **Parámetros**       | `$1`: Número de puerto (ej. 443).                              |
-| **Dependencias**     | Binario `ss`.                                                  |
-| **Salida/Efecto**    | Mensaje de confirmación en log si el puerto está activo.       |
-| **Estado de Salida** | `0`: Puerto activo, `1`: Puerto inactivo.                      |
+| **Atributo**         | **Detalles**                                                                  |
+| -------------------- | ----------------------------------------------------------------------------- |
+| **Propósito**        | Validar si uno o varios puertos específicos están activos en el stack local.  |
+| **Parámetros**       | `$@`: Lista de puertos (ej. `80 443 25`). Soporta múltiples argumentos.       |
+| **Dependencias**     | Binario `ss`.                                                                 |
+| **Salida/Efecto**    | Mensaje de confirmación por cada puerto; retorna error si al menos uno falla. |
+| **Estado de Salida** | `0`: Todos los puertos activos, `1`: Al menos un puerto inactivo.             |
 
 **Ejemplo:**
 
 ```Bash
-verify_port_activity 80 || log_event "WARN" "El servidor web no parece estar escuchando."
+verify_port_activity 80 443 25 || log_event "WARN" "Revisar servicios de red."
 ```
 
 ## 🔐 Dominio: Seguridad Perimetral y TLS
@@ -166,16 +168,39 @@ apply_nginx_hardening
 
 **Nivel de Riesgo:** Alto (Certificados)
 
-| **Atributo**         | **Detalles**                                                                                                        |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| **Propósito**        | Orquestar la obtención de certificados SSL/TLS (Certbot o Manual).                                                  |
-| **Parámetros**       | `$1`: Dominio, `$2`: Email, `$3`: Modo (certbot/manual), `$4`: Reto (nginx/standalone), `$5`: Staging (true/false). |
-| **Dependencias**     | Función `install_missing_dependencies` (de `sys-utils.sh`), binario `certbot`.                                      |
-| **Salida/Efecto**    | Instalación de certificados en el sistema y configuración de renovación automática.                                 |
-| **Estado de Salida** | `0`: Éxito, `1`: Fallo en el reto de Certbot.                                                                       |
+| **Atributo**         | **Detalles**                                                                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Propósito**        | Orquestar la obtención de certificados SSL/TLS. **Modo Autónomo:** Si faltan datos en sesión interactiva, los solicita al usuario.                            |
+| **Parámetros**       | `$1`: Dominio, `$2`: Email, `$3`: Modo (certbot/manual), `$4`: Reto (nginx/standalone/dns), `$5`: Staging (true/false). Todos opcionales en modo interactivo. |
+| **Dependencias**     | Función `verify_binary_existence` (de `sys-utils.sh`), binario `certbot`.                                                                                     |
+| **Salida/Efecto**    | Instalación de certificados en el sistema y configuración de renovación automática.                                                                           |
+| **Estado de Salida** | `0`: Éxito, `1`: Fallo en el reto de Certbot o falta de datos críticos.                                                                                       |
 
 **Ejemplo:**
 
 ```Bash
 configure_tls_edge "mail.midominio.com" "admin@midominio.com" "certbot" "nginx" "false"
+
+# Modo totalmente autónomo (interactivo)
+configure_tls_edge
+```
+
+## 🏗️ Dominio: Orquestación de Servicios (*Edge*)
+
+### `safe_service_config_apply`
+
+**Nivel de Riesgo:** Medio (Operacional)
+
+| **Atributo**         | **Detalles**                                                                                                                           |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Propósito**        | Aplicar cambios de configuración de forma segura, validando sintaxis antes de recargar/reiniciar el servicio para prevenir *downtime*. |
+| **Parámetros**       | `$1`: Nombre del servicio, `$2`: Comando de validación (ej. `nginx -t`), `$3`: Acción (`reload`/`restart`).                            |
+| **Dependencias**     | Binario del servicio (`$1`), función `control_service_state`.                                                                          |
+| **Salida/Efecto**    | Valida configuración; si es correcta, aplica la acción. Si es incorrecta, aborta la operación y registra el error.                     |
+| **Estado de Salida** | `0`: Validación y acción exitosas, `1`: Error de sintaxis o fallo al aplicar acción.                                                   |
+
+**Ejemplo:**
+
+```Bash
+safe_service_config_apply "nginx" "nginx -t" "reload"
 ```

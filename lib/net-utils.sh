@@ -142,21 +142,28 @@ audit_listening_sockets() {
   fi
 }
 
-# @description Checks if a specific port is active in the local socket stack.
-# @param $1 Port number.
-# @return 0 if listening, 1 otherwise.
+# @description Verifies if one or multiple ports are open and reachable.
+# @param $@ List of port numbers to verify.
+# @return 0 if all ports are active, 1 if at least one is unreachable.
 verify_port_activity() {
-  local port="${1}"
-  log_event "INFO" "Validating if port ${port} is open in local firewall..."
+  local -i exit_code=0
+  local ports=("$@")
 
-  # We use `ss` to see if something is already listening, or `nc` to test external connectivity if necessary.
-  if ss -tuln | grep -q ":${port} "; then
-    log_event "OK" "Port ${port} is active and listening."
-    return 0
-  else
-    log_event "WARN" "Port ${port} is not listening. Ensure your Cloud/OS Firewall allows it."
+  if [[ ${#ports[@]} -eq 0 ]]; then
+    log_event "WARN" "No ports provided to verify_port_activity."
     return 1
   fi
+
+  for port in "${ports[@]}"; do
+    if ss -tuln | grep -q ":${port} "; then
+      log_event "OK" "Port ${port} is active and listening."
+    else
+      log_event "WARN" "Port ${port} is NOT reachable or service is down."
+      exit_code=1
+    fi
+  done
+
+  return "${exit_code}"
 }
 
 # --- PUBLIC API: EDGE SECURITY & TLS ---
@@ -205,54 +212,125 @@ EOF
   log_event "OK" "Security policy applied at ${policy_file}."
 }
 
-# @description Manages TLS certificate acquisition and configuration.
-# @param $1 Domain name.
-# @param $2 Admin email.
+# @description Orchestrates TLS certificate acquisition (Certbot or Manual).
+# @details Smart function: prompts for missing data if in an interactive terminal.
+# @param $1 FQDN (Optional if interactive).
+# @param $2 Admin Email (Optional if interactive).
 # @param $3 Mode (manual | certbot).
-# @param $4 Challenge type (nginx | standalone | dns).
-# @param $5 Use staging (true | false).
+# @param $4 Challenge (nginx | standalone | dns).
+# @param $5 Staging (true | false).
+# @return 0 on success, 1 on failure.
 configure_tls_edge() {
-  local domain="${1}"
-  local email="${2}"
+  local domain="${1:-}"
+  local email="${2:-}"
   local mode="${3:-manual}"       # manual | certbot
   local challenge="${4:-nginx}"   # nginx | standalone | dns
   local use_staging="${5:-false}" # Staging mode
 
+  # 1. Mode Intelligence: If not defined, ask the user
+  if [[ -z "${mode}" ]]; then
+    if [[ -t 0 ]]; then
+      printf "❓ [PROMPT] Use Certbot for Let's Encrypt? (y/n): "
+      read -r resp
+      [[ "${resp,,}" == "y" ]] && mode="certbot" || mode="manual"
+    else
+      mode="manual" # Fallback for non-interactive processes
+    fi
+  fi
+
+  # 2. Manual Flow
+  if [[ "${mode}" == "manual" ]]; then
+    log_event "WARN" "MANUAL MODE: Administrator intervention required."
+    log_event "INFO" "Remediation instructions:"
+    log_event "INFO" " 1. Place your certificate in: /etc/piler/ssl/piler.crt"
+    log_event "INFO" " 2. Enter your private key in: /etc/piler/ssl/piler.key"
+    log_event "INFO" " 3. Update the Nginx Vhost to point to these routes."
+    mkdir -p /etc/piler/ssl
+    return 0
+  fi
+
+  # 3. Certbot (Autonomous) Workflow
+  # Validate required binaries before proceeding
+  verify_binary_existence "certbot"
+
+  # Capture missing data if we are in terminal mode
+  if [[ -t 0 ]]; then
+    [[ -z "${domain}" ]] && request_input domain "Enter FQDN (e.g. piler.domain.com)" 0
+    [[ -z "${email}" ]] && request_input email "Enter your email address for important account notifications" 0
+
+    # Internal Challenge Menu
+    if [[ -z "${1:-}" ]]; then # Only ask if no arguments were passed (assuming full interactive flow)
+      echo -e "\nSelect Certbot Challenge:\n1) nginx (Default)\n2) standalone\n3) dns"
+      printf "Selection [1-3]: "
+      read -r ch_choice
+      case "${ch_choice}" in
+        2) challenge="standalone" ;;
+        3) challenge="dns" ;;
+        *) challenge="nginx" ;;
+      esac
+
+      printf "❓ [PROMPT] Enable Staging mode (Dry-run)? (y/n): "
+      read -r is_stg
+      [[ "${is_stg,,}" == "y" ]] && use_staging="true"
+    fi
+  fi
+
+  # Final validation of critical data
+  [[ -z "${domain}" || -z "${email}" ]] && {
+    log_event "CRIT" "Missing FQDN or Email for TLS."
+    return 1
+  }
+
+  # Certbot execution
   local staging_flag=""
   [[ "${use_staging}" == "true" ]] && staging_flag="--staging"
 
-  # 1. Use of check_dependencies (KISA Standard)
-  local -a pkg_deps=()
-  [[ "${mode}" == "certbot" ]] && pkg_deps+=("certbot" "python3-certbot-nginx")
+  log_event "INFO" "Requesting Let's Encrypt cert for ${domain} (${challenge})..."
 
-  if [[ ${#pkg_deps[@]} -gt 0 ]]; then
-    check_dependencies "${pkg_deps[@]}"
+  if certbot --"${challenge}" -d "${domain}" --non-interactive --agree-tos -m "${email}" ${staging_flag}; then
+    log_event "OK" "TLS certificate process successful."
+    certbot renew --dry-run > /dev/null 2>&1 && log_event "OK" "Auto-renewal verified."
+    return 0
+  else
+    log_event "CRIT" "Certbot failed. Check DNS, firewall or challenge settings."
+    return 1
+  fi
+}
+
+# --- PUBLIC API: SERVICE EDGE ORCHESTRATION ---
+
+# @description Safely validates and applies configuration changes to a service.
+# @param $1 Service name (e.g., nginx, postfix).
+# @param $2 Validation command (e.g., "nginx -t", "postfix check").
+# @param $3 Action to perform if valid (reload | restart).
+# @return 0 on success, 1 on validation or action failure.
+safe_service_config_apply() {
+  local service_name="${1}"
+  local validation_cmd="${2}"
+  local action="${3:-reload}"
+
+  log_event "INFO" "Validating configuration for ${service_name} before ${action}..."
+
+  # 1. Verificar si el binario del servicio existe
+  if ! command -v "${service_name}" > /dev/null 2>&1; then
+    log_event "CRIT" "Service binary '${service_name}' not found in PATH."
+    return 1
   fi
 
-  # 2. TLS Orchestration
-  case "${mode}" in
-    "certbot")
-      log_event "INFO" "Requesting Let's Encrypt cert for ${domain}. (Staging: ${use_staging})..."
+  # 2. Ejecutar comando de validación de sintaxis
+  if eval "${validation_cmd}" > /dev/null 2>&1; then
+    log_event "OK" "${service_name} configuration syntax is valid."
 
-      # El comando ahora incluye staging y la autorenovación es automática con el plugin de certbot
-      local certbot_cmd="certbot --${challenge} -d ${domain} --non-interactive --agree-tos -m ${email} ${staging_flag}"
-
-      if eval "${certbot_cmd}"; then
-        log_event "OK" "TLS certificate process successful."
-        # Verificación de autorenovación (dry-run rápido)
-        certbot renew --dry-run > /dev/null 2>&1 && log_event "OK" "Auto-renewal verified."
-      else
-        log_event "CRIT" "Certbot failed. Check your challenge settings, DNS or firewall (ports 80/443)."
-        return 1
-      fi
-      ;;
-    "manual")
-      log_event "WARN" "MANUAL MODE: Administrator intervention required."
-      log_event "INFO" "Remediation instructions:"
-      log_event "INFO" " 1. Place your certificate in: /etc/piler/ssl/piler.crt"
-      log_event "INFO" " 2. Enter your private key in: /etc/piler/ssl/piler.key"
-      log_event "INFO" " 3. Update the Nginx Vhost to point to these routes."
-      mkdir -p /etc/piler/ssl
-      ;;
-  esac
+    # 3. Aplicar cambio usando nuestra API de control de servicios
+    if control_service_state "${action}" "${service_name}"; then
+      log_event "OK" "Service ${service_name} ${action}ed successfully."
+      return 0
+    else
+      log_event "CRIT" "Failed to ${action} ${service_name}."
+      return 1
+    fi
+  else
+    log_event "CRIT" "Syntax error detected in ${service_name} config. Aborting ${action}."
+    return 1
+  fi
 }
