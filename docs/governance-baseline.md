@@ -285,17 +285,29 @@ Este documento forma parte integral de la gobernanza técnica del repositorio.
 
 ## 12. Estándar de Arquitectura de Módulos (K'aatech)
 
-Para garantizar la reutilización y el desacoplamiento, el repositorio adopta un modelo de **Separación de Datos y Presentación**:
+Para garantizar la reutilización y el desacoplamiento, el repositorio adopta un modelo de **Diseño Resiliente**:
 
 ### 12.1 Tipología de Funciones en `lib/`
 
-1. **Fetchers (*Data-Only*)**: Funciones con prefijo `fetch_*`. Su única responsabilidad es extraer datos del sistema y asignarlos a variables. No deben generar salida a `stdout/stderr`.
-2. ***Auditors* (*Action-Oriented*)**: Funciones con prefijo `audit_*`. Realizan validaciones activas y pueden generar *logs* o reportes directamente.
-3. ***Utilities***: Funciones transversales (ej. `log_event`, `print_section`).
+Las funciones deben comunicar su intención mediante prefijos semánticos, facilitando la auditoría técnica:
 
-### 12.2 *Namespace* de Variables de Sistema
+1. **Exploración (`fetch_*`)**: Extraen metadata del sistema y la asignan al Namespace `KISA_`. Deben ser silenciosas (prohibido `stdout`).
+2. **Validación (`verify_*`)**: Pruebas de estado que retornan códigos de salida binarios (0/1).
+3. **Orquestación Segura (`safe_*`)**: *Wrappers* que ejecutan acciones mutantes (*reload/restart*) solo después de una validación de sintaxis exitosa. **Es el estándar obligatorio para cambios en servicios críticos.**
+4. **Interacción (`request_*` / `prompt_*`)**: Funciones capaces de solicitar datos al usuario si los parámetros requeridos están ausentes.
 
-Toda variable de metadatos del *host* extraída mediante *Fetchers* debe utilizar el *namespace* **`KISA_`** (*K'aatech Infrastructure System Attributes*) para evitar colisiones con variables de entorno del sistema o del usuario.
+### 12.2 Principio de Autonomía Inteligente
+
+Las funciones de librería deben ser diseñadas para detectar su entorno:
+
+- **Modo Programático**: Si recibe argumentos, los procesa sin interactuar.
+- **Modo Interactivo**: Si faltan argumentos y se detecta una terminal (`[[ -t 0 ]]`), debe solicitar la información al usuario para evitar fallos por datos vacíos.
+
+### 12.3 *Namespace* de Variables de Sistema (KISA)
+
+Toda variable de metadatos validada por el *framework* debe utilizar el *namespace* **`KISA_`** (*K'aatech Infrastructure System Attributes*) para evitar colisiones con variables de entorno del sistema o del usuario.
+
+Estas variables representan la "Fuente de Verdad" del estado del *host* para todos los *scripts* de la *suite*.
 
 Ejemplos obligatorios:
 
@@ -311,3 +323,7 @@ Los *scripts* ejecutables deben importar librerías mediante rutas relativas det
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../lib/sys-utils.sh"
 ```
+
+## 13. Resiliencia y Prevención de *Downtime*
+
+Ningún *script* operativo podrá realizar cambios en la configuración de servicios críticos (*Nginx*, *Piler*, etc.) sin implementar el patrón de **Validación Pre-flight**. El uso de `safe_service_config_apply` o lógicas equivalentes de validación de sintaxis antes de un `reload` es mandatorio para garantizar la disponibilidad del servicio.

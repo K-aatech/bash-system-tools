@@ -59,10 +59,17 @@ Cualquier excepción a esta regla debe estar documentada explícitamente en el e
     local file_path="/tmp/data"
     ```
 
-- **Funciones:** `snake_case`
+- **Funciones:** `snake_case`. Se sugiere el uso de prefijos semánticos en librerías para estandarizar el comportamiento esperado:
+
+  - `fetch_*`: Obtención de metadata/datos. **Prohibido** imprimir en `stdout` (Silenciosas).
+  - `verify_*`: Pruebas de estado (Booleanas). Retornan 0 (Éxito) o 1 (Fallo).
+  - `control_*`: Cambio de estado de servicios o procesos (start, stop, reload).
+  - `safe_*`: Funciones de orquestación con validación de sintaxis integrada (*Wrappers* de seguridad).
+  - `prompt_*` o `request_*`: Funciones interactivas que solicitan entrada al usuario.
+  - Los verbos de acción directa (ej. `apply_`, `setup_`, `run_`) son válidos para funciones que orquestan múltiples pasos.
 
     ```bash
-    check_status() { ... }
+    fetch_host_metadata() { ... }
     ```
 
 - **Constantes:** `UPPER_CASE`
@@ -76,16 +83,17 @@ Todo *script* que dependa de binarios externos debe validarlos antes de ejecutar
 Patrón recomendado:
 
 ```bash
-require_command() {
-    local cmd="$1"
-    command -v "$cmd" >/dev/null 2>&1 || {
-        echo "ERROR: Missing required command: $cmd" >&2
-        exit 1
-    }
+verify_binary_existence() {
+  local cmd="$1"
+  command -v "$cmd" >/dev/null 2>&1 || {
+    log_event "CRIT" "Missing required command: $cmd"
+    exit 1
+  }
 }
 ```
 
-Las dependencias deben validarse al inicio del *script*.
+> [!WARNING]
+> Las dependencias deben validarse mediante este estándar al inicio del *script* o antes de operaciones críticas.
 
 ## 5. Manejo de Errores
 
@@ -258,25 +266,11 @@ Esta guía se basa en los principios de robustez de la **[Google Shell Style Gui
 
 En caso de ambigüedad, escenarios no cubiertos por este documento o debates técnicos sobre el estilo, **prevalecerá el estándar definido por Google**. Se recomienda a los desarrolladores consultar dicha guía para profundizar en las razones detrás de estos estándares de seguridad y legibilidad.
 
-## 16. Patrones de Diseño de Librerías (*Decoupling*)
+## 16. Arquitectura de Librerías y Estándar KISA
 
-Para maximizar la reutilización, las librerías deben separar la lógica de obtención de datos de la lógica de presentación.
+Las librerías deben facilitar la **Gobernanza de Infraestructura** mediante una organización lógica y una gestión de datos predecible.
 
-### 16.1 Funciones de Descubrimiento (*Fetchers*)
-
-- **Prefijo**: `fetch_*`
-- **Responsabilidad**: Consultar el sistema y asignar valores a variables `KISA_*`.
-- **Restricción**: **PROHIBIDO** imprimir en `stdout` o `stderr`. Deben ser "silenciosas".
-- **Uso de ShellCheck**: Es obligatorio usar `# shellcheck disable=SC2034` en variables que se exportan para ser usadas por *scripts* externos.
-
-### 16.2 Funciones de Auditoría (*Auditors*)
-
-- **Prefijo**: `audit_*`
-- **Responsabilidad**: Validar estados activos (ej. servicios, puertos, permisos).
-- **Salida**: Pueden generar *logs* directamente o devolver flujos de texto para ser procesados por un orquestador.
-
-### 16.3 Funciones de Presentación (*Renderers*)
-
-- **Prefijo**: `render_*`
-- **Ubicación**: Preferentemente en el *script* ejecutable (no en la librería).
-- **Responsabilidad**: Tomar datos de las variables `KISA_*` y darles formato visual usando `log_event`.
+- **Organización por Dominios:** Las funciones deben agruparse en bloques de responsabilidad (ej. `# --- Dominio: Red ---`).
+- **Namespace KISA:** El uso del prefijo `KISA_` en variables globales (ej. `KISA_PRIMARY_IP`) identifica datos de auditoría que han sido validados por el framework y son de confianza para otros módulos.
+- **Autonomía y Resiliencia:** - Las funciones deben ser capaces de operar de forma programática (usando argumentos) o interactiva (solicitando datos si faltan y se detecta una terminal).
+  - **Validación de Integridad:** Se prioriza el uso de *wrappers* que validen la sintaxis antes de mutar servicios críticos (Patrón de Seguridad Operativa).

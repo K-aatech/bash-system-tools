@@ -7,7 +7,7 @@
 [![Secret Scanning (TruffleHog)](https://github.com/K-aatech/bash-system-tools/actions/workflows/secret-scanning.yml/badge.svg)](https://github.com/K-aatech/bash-system-tools/actions/workflows/secret-scanning.yml)
 [![CodeQL](https://github.com/K-aatech/bash-system-tools/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/K-aatech/bash-system-tools/actions/workflows/github-code-scanning/codeql)
 
-[![Quality](https://img.shields.io/badge/quality-K'aatech%20Baseline%20v1.1.0-60c1ec)](./docs/governance-baseline.md)
+[![Quality](https://img.shields.io/badge/quality-K'aatech%20Baseline%20v1.2.1-60c1ec)](./docs/governance-baseline.md)
 ![Bash Version](https://img.shields.io/badge/bash-%3E%3D4.2-blue)
 ![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
 ![Stable Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?exclude_prereleases&color=blue&label=stable)
@@ -39,25 +39,33 @@ sudo ./audit/system-health-audit.sh
 ### ¿Qué se audita?
 
 * **Identidad del *Host*:** *Namespace* KISA_ (*Hostname*, *Kernel*, *Distro*, *Uptime*).
-* **Seguridad:** Matriz de permisos críticos (`/etc/shadow`, `sudoers`) y *reboots* pendientes.
+* **Seguridad:** Matriz de permisos críticos, *reboots* pendientes y cumplimiento de *Hardening*.
 * **Rendimiento:** Carga de CPU, I/O Wait, procesos Zombis y monitoreo térmico por adaptador.
-* **Red:** Contexto local, conectividad a* internet y latencia *multi-cloud* (*"Fierro-to-Cloud"*).
+* **Red:** Contexto local, conectividad y latencia *multi-cloud* (*"Fierro-to-Cloud"*).
 * **Virtualización:** Salud y estado de contenedores *Docker* (detección dinámica).
 
 ## 🏗️ Estructura y Módulos
 
-El repositorio se organiza por dominios de responsabilidad para facilitar su uso en diferentes escenarios de consultoría y administración, utilizando una **Arquitectura de Librerías Desacopladas** (`lib/`) para alimentar las herramientas operativas:
+El repositorio se organiza por dominios de responsabilidad, utilizando una **Arquitectura de Librerías Inteligentes** (`lib/`) que soportan ejecución programática e interactiva:
 
-* **`audit/`**: *Scripts* de inspección y diagnóstico. Generan reportes de estado sin alterar el sistema. Ideales para auditorías iniciales con clientes.
-  * **`system-health-audit.sh`**: Nuestra herramienta insignia. Realiza una auditoría integral en **6 Fases Estructuradas** (*Governance, Security, Performance, Storage, Network, y Virtualization*).
-* **`hardening/`**: Herramientas de reforzamiento de seguridad. Aplican políticas de "mínimo privilegio" y cierran brechas en la configuración del SO.
-* **`deploy/`**: (Implementaciones) *Scripts* destinados a la instalación, configuración inicial y despliegue de servicios o aplicaciones específicas.
-  * `install-piler.sh`: **`install-piler.sh`**: **(v0.2.0)** Despliegue profesional para Mail Piler. Implementa compilación nativa desde fuente, gestión híbrida de zonas horarias (UTC/Local), y configuración atómica de Nginx/MariaDB. [Ver Manual de Ingeniería](./docs/engineering-manual-piler.md).
-* **`maintenance/`**: Automatización de tareas recurrentes como rotación de *logs*, *backups* y limpieza de recursos.
-* **`scripts/`**: Utilidades generales de sistema y herramientas de soporte que asisten al SysAdmin en tareas cotidianas no categorizadas en los módulos anteriores.
-* **`lib/`**: El núcleo de inteligencia del *framework*.
-  * **Modelos *Data-Only***: Librerías especializadas (`sys-utils`, `net-utils`, `deploy-utils`) que extraen metadatos del sistema y gestionan servicios (Systemd/Nginx) sin generar ruido en los flujos de salida, permitiendo su reutilización en otros *scripts*.
-  * ***Logging Engine***: Sistema de registro atómico con soporte visual mejorado (v1.1.0 con iconografía de estado y rotación determinista).
+* **`audit/`**: *Scripts* de inspección y diagnóstico. Generan reportes de estado sin alterar el sistema.
+* **`hardening/`**: Herramientas de reforzamiento de seguridad.
+  * **`piler-hardening.sh`**: **(v0.1.0)** Endurecimiento perimetral para Mail Piler. Implementa orquestación segura de TLS 1.3 y políticas HSTS. [Ver Manual de Operaciones](./docs/operations/piler-hardening-manual.md).
+* **`deploy/`**: *Scripts* destinados a la instalación y configuración inicial.
+* **`maintenance/`**: Automatización de tareas recurrentes (backups, limpieza, rotación).
+* **`lib/`**: El núcleo de inteligencia (KISA Framework).
+  * **Orquestación Segura (`safe_*`)**: Módulos que garantizan la integridad de los servicios (Nginx/Systemd) validando la sintaxis antes de aplicar cambios para prevenir *downtime*.
+  * **Autonomía Inteligente**: Funciones capaces de detectar si faltan parámetros y solicitarlos interactivamente solo si hay una terminal activa.
+
+## 📚 Documentación y Gobernanza
+
+Hemos organizado nuestro conocimiento bajo estándares de **Ingeniería SRE** para facilitar la consulta rápida y la profundidad técnica:
+
+| Categoría       | Ubicación                                | Contenido                                                                    |
+| :-------------- | :--------------------------------------- | :--------------------------------------------------------------------------- |
+| **Operaciones** | [`docs/operations/`](./docs/operations/) | Manuales de Ingeniería (SRE) para la ejecución segura de scripts operativos. |
+| **Referencia**  | [`docs/reference/`](./docs/reference/)   | Documentación técnica de la API de librerías y módulos `KISA_`.              |
+| **Gobernanza**  | [`docs/`](./docs/)                       | Guías de estilo, baseline de seguridad y políticas de contribución.          |
 
 ## 🤝 Para SysAdmins y Colaboradores
 
@@ -81,8 +89,12 @@ Este repositorio es una implementación de **Ingeniería de Sistemas en *Bash***
 
 * **Namespace KISA:** Estandarización de atributos de infraestructura para evitar colisiones globales.
 * **Separación de Datos y Presentación:** Los módulos de descubrimiento (`fetch_`) están desacoplados de los módulos de reporte (`render_`), facilitando la futura integración con *Dashboards* o APIs.
-* **Resiliencia Operativa:** Uso de `set -euo pipefail` e `IFS` seguro para evitar fallos silenciosos en entornos productivos.
+* **Resiliencia Operativa:**
+  * Uso de `set -euo pipefail` e `IFS` seguro para evitar fallos silenciosos en entornos productivos.
+  * Uso de `safe_service_config_apply` para garantizar que ningún error tipográfico afecte la disponibilidad de los servicios en producción.
 * **Interactividad Segura:** Uso de `request_input` para la captura de datos sensibles (*passwords*) sin eco en terminal ni rastro en el historial de Bash (`.bash_history`).
+* **Validación Pre-flight:** Verificación elástica de binarios y estados de servicio antes de iniciar cualquier lógica mutante.
 
 ---
+
 Desarrollado con rigor por el equipo de [**K'aatech**](https://kaatech.mx).

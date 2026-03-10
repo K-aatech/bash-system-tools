@@ -173,9 +173,23 @@ El repositorio aplica reglas estrictas de formato para archivos no ejecutables m
 - **Markdown**: Cumplimiento de `markdownlint`.
 - **Esquemas**: Validación de sintaxis en archivos `YAML` y `JSON`.
 
-Se recomienda activar el "Format on Save" en su editor para evitar rechazos en la CI.
+Se recomienda activar el *"Format on Save"* en su editor para evitar rechazos en la CI.
 
-## 10. Revisión y Aprobación
+## 10. Documentación de *Scripts* Operativos (*SRE Standard*)
+
+Para garantizar la transferibilidad del conocimiento y la seguridad en la ejecución, todo nuevo *script* ejecutable destinado a las carpetas operativas (`audit/`, `hardening/`, `maintenance/` o `deploy/`) debe incluir obligatoriamente su propio **Manual de Ingeniería**.
+
+### 10.1 Ubicación y Formato
+
+- **Ruta:** `docs/operations/<nombre-del-script>-manual.md`
+- **Requisito:** El manual debe estar actualizado conforme a la lógica del *script* en cada *Pull Request*.
+- **Contenido Mínimo:** Propósito, Riesgos Detectados, Dependencias de Librerías, Flujo de *Pre-flight* y Plan de *Rollback*.
+
+### 10.2 Referencia Técnica de Librerías
+
+Si la contribución modifica o añade funciones a `lib/`, se debe actualizar el archivo de referencia correspondiente en `docs/reference/` (ej. `net-utils.md`), detallando el contrato de la función (parámetros, retornos y comportamiento del Namespace `KISA_`).
+
+## 11. Revisión y Aprobación
 
 Se requiere la aprobación de al menos un mantenedor antes de la fusión.
 
@@ -186,7 +200,7 @@ Los mantenedores pueden rechazar contribuciones que:
 - Reduzcan el determinismo.
 - Disminuyan la integridad estructural.
 
-## 11. Autoridad del Mantenedor
+## 12. Autoridad del Mantenedor
 
 Los mantenedores son responsables de:
 
@@ -196,7 +210,7 @@ Los mantenedores son responsables de:
 
 Las reglas de gobernanza prevalecen sobre las preferencias individuales.
 
-## 12. Ampliación del *Baseline*
+## 13. Ampliación del *Baseline*
 
 Si propone ampliar la línea base:
 
