@@ -52,7 +52,7 @@ run_preflight_checks() {
 
   # 2. Validation of the Systemd service (the real indicator of success)
   log_event "INFO" "Validating Mail Piler service stack..."
-  verify_service_status "piler.service" "piler-smtp.service" "pilersearch.service"
+  verify_service_status "piler" "piler-smtp" "pilersearch"
 
   log_event "OK" "Mail Piler installation and service stack detected."
 

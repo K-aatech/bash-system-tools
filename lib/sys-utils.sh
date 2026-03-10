@@ -96,17 +96,27 @@ verify_binary_existence() {
   fi
 }
 
-# @description Checks the status of Systemd services.
-# @param $@ List of service names (e.g.: check_services "nginx.service" "piler.service").
-# @exit 1 If a service is not registered.
+# @description Checks the registration and status of Systemd services.
+# @param $@ List of service names.
+# @exit 1 If a service is not found in the system.
 verify_service_status() {
   for svc in "$@"; do
-    if ! systemctl list-unit-files | grep -q "$svc"; then
-      log_event "CRIT" "Service not registered: $svc"
+    # 1. Normalization: Ensure it ends in .service for accurate queries
+    local service_unit="${svc}"
+    [[ "${service_unit}" != *.service ]] && service_unit="${service_unit}.service"
+
+    # 2. Log Verification (LoadState)
+    # `systemctl show` is much faster and more unambiguous than `list-unit-files` + `grep`
+    if [[ "$(systemctl show -p LoadState --value "${service_unit}")" == "not-found" ]]; then
+      log_event "CRIT" "Service not registered: ${service_unit}"
       exit 1
     fi
-    if ! systemctl is-active --quiet "$svc"; then
-      log_event "WARN" "Service $svc is registered but NOT running."
+
+    # 3. Activity Verification
+    if ! systemctl is-active --quiet "${service_unit}"; then
+      log_event "WARN" "Service ${service_unit} is registered but NOT running."
+    else
+      log_event "OK" "Service ${service_unit} is active."
     fi
   done
 }
