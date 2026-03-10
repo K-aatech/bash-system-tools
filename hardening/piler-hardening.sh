@@ -42,7 +42,7 @@ run_preflight_checks() {
   print_section "Pre-flight Security Audit"
 
   require_root_privileges
-  fetch_system_metadata
+  fetch_host_metadata
 
   log_event "INFO" "Targeting: ${KISA_HOSTNAME} (${KISA_DISTRO})"
 
