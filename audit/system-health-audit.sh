@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Script Name:  system-health-audit.sh
-# Description:  Professional system health audit for K'aatech infrastructure.
-# Includes:     Dependency checks, log rotation, file integrity, thermal monitoring and Performance Audit.
-# Standards:    GBSG Compliant | K'aatech Baseline v1.1.0
-# License:      MIT
+# SCRIPT: system-health-audit.sh
+# DESCRIPTION: Professional system health audit for K'aatech infrastructure.
+# STANDARDS: GBSG Compliant | K'aatech Baseline v1.2.1
 # ==============================================================================
 
 set -euo pipefail
@@ -33,6 +31,11 @@ LIB_LOGGING="${SCRIPT_DIR}/../lib/logging.sh"
 LIB_UTILS="${SCRIPT_DIR}/../lib/sys-utils.sh"
 LIB_NET="${SCRIPT_DIR}/../lib/net-utils.sh"
 
+# 1. Configure persistence before loading libraries (KISA Injection)
+export LOG_FILE="${LOG_FILE:-./logs/system-health-audit.log}"
+[[ ! -d "$(dirname "$LOG_FILE")" ]] && mkdir -p "$(dirname "$LOG_FILE")"
+
+# 2. Secure library loading
 # shellcheck source=../lib/logging.sh
 [[ -f "${LIB_LOGGING}" ]] && source "${LIB_LOGGING}"
 # shellcheck source=../lib/sys-utils.sh
@@ -40,14 +43,11 @@ LIB_NET="${SCRIPT_DIR}/../lib/net-utils.sh"
 # shellcheck source=../lib/net-utils.sh
 [[ -f "${LIB_NET}" ]] && source "${LIB_NET}"
 
-# It allows overwriting from the environment, e.g.: log_dir=/var/log/custom ./script.sh
-export log_dir="${log_dir:-./logs}"
-LOG_FILE="${log_dir}/$(basename "$0" .sh).log"
-export LOG_FILE
-# Asegurar que el directorio de logs existe antes de iniciar
-[[ ! -d "${log_dir}" ]] && mkdir -p "${log_dir}"
-
 # --- Core Functions ---
+
+# @description Processes sensor data to monitor hardware temperatures.
+# @no-params
+# @return 0 always (non-blocking).
 audit_thermal_status() {
   command -v sensors > /dev/null 2>&1 || return 0
   log_event "INFO" "Checking thermal status by hardware adapter..."
@@ -96,6 +96,9 @@ audit_thermal_status() {
   fi
 }
 
+# @description Audits CPU Load Average and I/O Wait times.
+# @no-params
+# @return 0 on success.
 audit_cpu_performance() {
   local load_1m load_5m load_15m iowait
   log_event "INFO" "Auditing CPU performance..."
@@ -112,6 +115,9 @@ audit_cpu_performance() {
   fi
 }
 
+# @description Scans for defunct (zombie) processes in the system.
+# @no-params
+# @return 0 on success.
 audit_zombie_processes() {
   local zombies_list z_pid z_ppid z_state z_cmd p_name count
   log_event "INFO" "Checking for zombie processes..."
@@ -134,6 +140,9 @@ audit_zombie_processes() {
   fi
 }
 
+# @description Monitors RAM utilization and flags high consumption.
+# @no-params
+# @return 0 on success, 1 on data retrieval error.
 audit_memory_usage() {
   local total used usage
   # Avoid SC2155 by separating declaration and assignment
@@ -151,6 +160,9 @@ audit_memory_usage() {
   fi
 }
 
+# @description Iterates through partitions to check available space.
+# @no-params
+# @return 0 on success.
 audit_disk_health() {
   local usage target p_val
   local -i found_issue=0
@@ -171,11 +183,14 @@ audit_disk_health() {
   fi
 }
 
-# --- Local Renderers ---
+# --- Internal Display Helpers ---
 
-render_host_info() {
+# @description Aggregates and displays system metadata.
+# @no-params
+# @stdout Formatted host identification logs.
+display_system_summary() {
   # 1. We call the library function to fill the variables
-  fetch_host_metadata
+  fetch_system_metadata
 
   # 2. We printed it in audit format
   log_event "INFO" "--- Host Identification ---"
@@ -186,7 +201,10 @@ render_host_info() {
   log_event "INFO" "  Uptime   : ${KISA_UPTIME}"
 }
 
-render_network_context() {
+# @description Aggregates and displays network and DNS metadata.
+# @no-params
+# @stdout Formatted network context logs.
+display_network_summary() {
   fetch_network_metadata
   fetch_dns_metadata
 
@@ -207,20 +225,16 @@ render_network_context() {
 # --- Main Execution ---
 main() {
   # PHASE 1: INITIALIZATION, GOVERNANCE & HOST CONTEXT
-  print_section "PHASE 1: PRE-CHECKS, GOVERNANCE & HOST CONTEXT"
-
-  render_host_info
+  print_section "PHASE 1: PRE-CHECKS & HOST CONTEXT"
+  display_system_summary
 
   # Validation of Privileges (Security by Design)
-  if [[ "${EUID}" -ne 0 ]]; then
-    log_event "CRIT" "Root privileges required for security baseline audit."
-    exit 1
-  fi
+  require_root_privileges
   log_event "INFO" "Privilege escalation verified (Root)."
 
   # Dependency Check (Delegated)
   log_event "INFO" "Validating core dependencies..."
-  check_dependencies "${CORE_DEPS[@]}"
+  verify_binary_existence "${CORE_DEPS[@]}"
   # Optional (non-blocking) dependencies. Are not critical but enhance reporting
   local missing_opt=()
   for dep in "${OPTIONAL_DEPS[@]}"; do
@@ -270,12 +284,12 @@ main() {
   print_section "PHASE 5: NETWORK AUDIT"
   # Network Audits (Delegated to net-utils)
   log_event "INFO" "Retrieving network interfaces..."
-  render_network_context
+  display_network_summary
 
-  log_event "INFO" "Scanning listening ports..."
-  audit_listening_ports | while read -r line; do log_event "INFO" "${line}"; done
+  log_event "INFO" "Scanning listening sockets..."
+  audit_network_sockets | while read -r line; do log_event "INFO" "${line}"; done
 
-  if check_internet_connectivity; then
+  if verify_internet_connectivity; then
     log_event "OK" "Internet connectivity detected."
     audit_multi_cloud_latency | while read -r line; do log_event "INFO" "${line}"; done
   else
@@ -283,7 +297,7 @@ main() {
   fi
 
   # PHASE 6: VIRTUALIZATION
-  print_section "PHASE 6: CONTAINER AUDIT"
+  print_section "PHASE 6: VIRTUALIZATION"
   audit_container_status
 
   # FINALIZATION
@@ -293,8 +307,7 @@ main() {
   warnings=$(grep -c "WARN" "${LOG_FILE}" || echo "0")
   errors=$(grep -c "CRIT" "${LOG_FILE}" || echo "0")
 
-  log_event "INFO" "Audit completed with ${errors} critical issues and ${warnings} warnings."
-
+  log_event "INFO" "Audit completed. Errors: ${errors} | Warnings: ${warnings}"
   if [[ "${errors}" -gt 0 ]]; then
     log_event "CRIT" "⚠️  Immediate action required. Please review the findings above."
   else
