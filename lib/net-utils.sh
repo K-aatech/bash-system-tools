@@ -220,7 +220,7 @@ EOF
 configure_tls_edge() {
   local domain="${1:-}"
   local email="${2:-}"
-  local mode="${3:-manual}"       # manual | certbot
+  local mode="${3:-}"             # manual | certbot
   local challenge="${4:-nginx}"   # nginx | standalone | dns
   local use_staging="${5:-false}" # Staging mode
 
@@ -243,7 +243,7 @@ configure_tls_edge() {
     log_event "INFO" " 2. Enter your private key in: /etc/piler/ssl/piler.key"
     log_event "INFO" " 3. Update the Nginx Vhost to point to these routes."
     mkdir -p /etc/piler/ssl
-    return 0
+    return 1
   fi
 
   # 3. Certbot (Autonomous) Workflow
