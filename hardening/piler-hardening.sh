@@ -22,16 +22,20 @@ readonly LIB_UTILS="${SCRIPT_DIR}/../lib/sys-utils.sh"
 readonly LIB_NET="${SCRIPT_DIR}/../lib/net-utils.sh"
 
 # 1. Configure persistence (KISA Namespace)
-export LOG_FILE="${LOG_FILE:-./logs/piler-hardening.log}"
-[[ ! -d "$(dirname "$LOG_FILE")" ]] && mkdir -p "$(dirname "$LOG_FILE")"
+readonly LOG_DIR="${SCRIPT_DIR}/../logs"
+export LOG_FILE="${LOG_FILE:-${LOG_DIR}/piler-hardening.log}"
+[[ ! -d "${LOG_DIR}" ]] && mkdir -p "${LOG_DIR}"
 
 # 2. Secure library loading
-# shellcheck source=../lib/logging.sh
-[[ -f "${LIB_LOGGING}" ]] && source "${LIB_LOGGING}"
-# shellcheck source=../lib/sys-utils.sh
-[[ -f "${LIB_UTILS}" ]] && source "${LIB_UTILS}"
-# shellcheck source=../lib/net-utils.sh
-[[ -f "${LIB_NET}" ]] && source "${LIB_NET}"
+for lib in "${LIB_LOGGING}" "${LIB_UTILS}" "${LIB_NET}"; do
+  if [[ -f "$lib" ]]; then
+    # shellcheck source=/dev/null
+    source "$lib"
+  else
+    echo "ERROR: Missing library: $lib" >&2
+    exit 1
+  fi
+done
 
 # --- Logic ---
 
@@ -58,7 +62,12 @@ run_preflight_checks() {
 
   # 3. Verify port activity (using net-utils API)
   log_event "INFO" "Verifying core service ports..."
-  verify_port_activity 80 443 25 # HTTP (For challenge), HTTPS (For service) and SMTP (Vital for receiving emails)
+  verify_port_activity 80 25 # HTTP (For challenge) and SMTP (Vital for receiving emails)
+
+  # 4. Verify Nginx bin and service
+  log_event "INFO" "Validating Nginx infrastructure..."
+  verify_binary_existence "nginx"
+  verify_service_status "nginx"
 }
 
 # @description Orchestrates network security and delegates TLS lifecycle to net-utils.
@@ -67,14 +76,14 @@ run_preflight_checks() {
 apply_network_security() {
   print_section "Edge Security & TLS"
 
-  # 1. Nginx Configuration (Headers and Protocols, defined in net-utils/sys-utils)
-  apply_nginx_hardening
-
-  # 2. TLS/SSL Management (delegated to lib/net-utils.sh)
+  # 1. TLS/SSL Management (delegated to lib/net-utils.sh)
   if ! configure_tls_edge; then
     log_event "CRIT" "Network security phase failed during TLS configuration."
     return 1
   fi
+
+  # 2. Nginx Configuration (Headers and Protocols, defined in net-utils/sys-utils)
+  apply_nginx_hardening
 
   log_event "OK" "Network security and TLS stack configured successfully."
 }
@@ -89,6 +98,16 @@ finalize_hardening() {
     log_event "OK" "Security Hardening Suite completed for ${KISA_HOSTNAME}."
   else
     log_event "CRIT" "Hardening process failed at the final verification stage."
+    exit 1
+  fi
+
+  log_event "INFO" "Performing final security post-check..."
+
+  if verify_port_activity 443; then
+    log_event "OK" "Hardening successful: Port 443 is now active and secure."
+  else
+    log_event "CRIT" "Hardening verification failed: Port 443 is still unreachable."
+    log_event "WARN" "Please check Nginx logs and firewall rules."
     exit 1
   fi
 }

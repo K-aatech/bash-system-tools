@@ -173,13 +173,10 @@ verify_port_activity() {
 # Injects security headers and hardened SSL parameters
 apply_nginx_hardening() {
   # 1. Security Guard: Is it Nginx and is it active?
-  if ! command -v nginx > /dev/null 2>&1; then
-    log_event "CRIT" "Nginx binary not found. Hardening aborted."
-    return 1
-  fi
+  verify_binary_existence "nginx"
 
   if ! systemctl is-active --quiet nginx; then
-    log_event "WARN" "Nginx is installed but not running. Proceeding with config injection only."
+    log_event "WARN" "Nginx is installed but not running. Injected config will only take effect after a manual start/reload."
   fi
 
   # 2. Generate DHParams if they do not exist (Extra security against Logjam)
