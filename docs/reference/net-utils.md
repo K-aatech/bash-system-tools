@@ -15,6 +15,7 @@
     - [`configure_tls_edge`](#configure_tls_edge)
   - [🏗️ Dominio: Orquestación de Servicios (*Edge*)](#️-dominio-orquestación-de-servicios-edge)
     - [`safe_service_config_apply`](#safe_service_config_apply)
+    - [`link_ssl_snippet`](#link_ssl_snippet)
 
 ---
 
@@ -166,23 +167,24 @@ apply_nginx_hardening
 
 ### `configure_tls_edge`
 
-**Nivel de Riesgo:** Alto (Certificados)
+**Nivel de Riesgo:** Alto (Certificados y *Edge*)
 
-| **Atributo**         | **Detalles**                                                                                                                                                  |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Propósito**        | Orquestar la obtención de certificados SSL/TLS. **Modo Autónomo:** Si faltan datos en sesión interactiva, los solicita al usuario.                            |
-| **Parámetros**       | `$1`: Dominio, `$2`: Email, `$3`: Modo (certbot/manual), `$4`: Reto (nginx/standalone/dns), `$5`: Staging (true/false). Todos opcionales en modo interactivo. |
-| **Dependencias**     | Función `verify_binary_existence` (de `sys-utils.sh`), binario `certbot`.                                                                                     |
-| **Salida/Efecto**    | Instalación de certificados en el sistema y configuración de renovación automática.                                                                           |
-| **Estado de Salida** | `0`: Éxito, `1`: Fallo en el reto de Certbot o falta de datos críticos.                                                                                       |
+| **Atributo**         | **Detalles**                                                                                                                                                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Propósito**        | Orquestar la obtención de certificados SSL/TLS y generar snippets de configuración para Nginx. Utiliza el modo `certonly` para evitar modificaciones intrusivas en los Virtual Hosts originales.                          |
+| **Parámetros**       | `$1`: FQDN, `$2`: Email, `$3`: Ruta Snippet Nginx, `$4`: Ruta Cert Manual (Ref), `$5`: Ruta Key Manual (Ref), `$6`: Modo (certbot/manual), `$7`: Reto (nginx/standalone), `$8`: Staging (true/false).                     |
+| **Dependencias**     | Función `verify_binary_existence` (de `sys-utils.sh`), binario `certbot`.                                                                                                                                                 |
+| **Salida/Efecto**    | 1. Genera un snippet en la ruta `$3` con las directivas `ssl_certificate`. 2. En modo Manual, crea el directorio destino y retorna instrucciones. 3. En modo Certbot, valida la renovación automática (si no es staging). |
+| **Estado de Salida** | `0`: Éxito (Certificado obtenido y snippet generado), `1`: Fallo o requiere intervención manual.                                                                                                                          |
 
 **Ejemplo:**
 
-```Bash
-configure_tls_edge "mail.midominio.com" "admin@midominio.com" "certbot" "nginx" "false"
+```bash
+# Uso con parámetros definidos (Ideal para automatización)
+configure_tls_edge "piler.mx" "admin@piler.mx" "/etc/nginx/snippets/ssl.conf" "/etc/piler/ssl/piler.crt" "/etc/piler/ssl/piler.key" "certbot" "nginx" "false"
 
-# Modo totalmente autónomo (interactivo)
-configure_tls_edge
+# Modo Híbrido (La función solicitará modo y reto si se pasan vacíos)
+configure_tls_edge "piler.mx" "admin@piler.mx" "/etc/nginx/snippets/piler-ssl.conf" "/etc/piler/ssl/piler.crt" "/etc/piler/ssl/piler.key"
 ```
 
 ## 🏗️ Dominio: Orquestación de Servicios (*Edge*)
@@ -203,4 +205,26 @@ configure_tls_edge
 
 ```Bash
 safe_service_config_apply "nginx" "nginx -t" "reload"
+```
+
+### `link_ssl_snippet`
+
+**Nivel de Riesgo:** Medio (Configuración Operacional)
+
+| **Atributo**         | **Detalles**                                                                                                                                                    |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Propósito**        | Vincular un snippet de configuración SSL/TLS a un Virtual Host de Nginx de forma no intrusiva, actuando como puente entre la identidad TLS y la aplicación.     |
+| **Parámetros**       | `$1`: Ruta al archivo Vhost, `$2`: Ruta al archivo snippet a incluir.                                                                                           |
+| **Dependencias**     | Binario `sed`, `grep`, `nginx` (para validación de sintaxis).                                                                                                   |
+| **Salida/Efecto**    | Inyecta una directiva `include` tras el `server_name` en el Vhost. Si la sintaxis de Nginx falla, realiza un rollback automático eliminando la línea inyectada. |
+| **Estado de Salida** | `0`: Éxito (Configuración vinculada y válida), `1`: Error de archivo o fallo sintáctico.                                                                        |
+
+**Example:**
+
+```Bash
+local piler_vhost="/etc/nginx/sites-available/piler.conf"
+local ssl_snippet="/etc/nginx/snippets/piler-ssl.conf"
+
+# Orquestación del vínculo sin afectar el servicio todavía
+link_ssl_snippet "$piler_vhost" "$ssl_snippet"
 ```

@@ -63,6 +63,14 @@ Descarga los entornos aislados de los *linters* y verifica el estado actual.
     pre-commit run --all-files
     ```
 
+4. Configuración de Identidad Local (Opcional pero recomendado):
+Cree un archivo `.env` en la raíz para pre-cargar los parámetros de su entorno de desarrollo/prueba. Esto evitará *prompts* interactivos constantes.
+
+   ```bash
+   cp .env.example .env  # Si existe una plantilla, o créelo manualmente:
+   echo "PILER_FQDN=piler.local" >> .env
+   ```
+
 ## 3. Configuración de Extensiones Recomendadas (*VS Code*)
 
 Al abrir el proyecto en *VS Code*, se te sugerirá la instalación de las extensiones recomendadas en `.vscode/extensions.json`. Esto habilitará el formateo automático y las alertas de *ShellCheck* en tiempo real mientras escribe.
@@ -77,6 +85,9 @@ Al abrir el proyecto en *VS Code*, se te sugerirá la instalación de las extens
 - [ ] Extensiones recomendadas instaladas en *VS Code*.
 - [ ] Ejecutado `pre-commit run --all-files` sin errores.
 - [ ] ***Commit* de prueba**: Realice un *commit* pequeño para validar que no haya errores de entorno.
+- [ ] **Archivo `.env`** creado y verificado (si se requiere ejecución desatendida).
+- [ ] **Validación de Gitignore**: Confirmar que el archivo `.env` no está siendo trackeado por Git (`git check-ignore .env`).
+- [ ] **Permisos de Ejecución**: Los scripts en `hardening/` y `audit/` tienen el bit `+x`.
 
 > [!CAUTION]
 > **Bloqueo de Commits**: Si no instala `trufflehog` y `shellcheck` localmente, el proceso fallará. Los *hooks* usan motores locales por velocidad y privacidad.

@@ -266,12 +266,12 @@ El *baseline* se versiona como cualquier otro proyecto, pero su impacto es organ
 
 Este *baseline* se rige por los siguientes principios:
 
-- Determinismo
-- Automatización por defecto
+- **Determinismo:** Resultados idénticos ante entradas idénticas.
+- **Consciencia de Identidad:** Los scripts deben ser capaces de resolver el contexto del host (FQDN, IP, Roles) de forma autónoma o asistida.
+- **Automatización por defecto:** Minimizar la intervención humana en flujos productivos.
+- **Mínima Intervención (Snippets):** Preferir la extensión de configuraciones sobre la modificación de archivos core de servicios.
+- **Transparencia del historial e Inmutabilidad de flujos.**
 - Eliminación de intervención manual en *releases*
-- Transparencia del historial
-- Reproducibilidad técnica
-- Mínima ambigüedad operativa
 
 ## 11. Cumplimiento
 
@@ -292,9 +292,10 @@ Para garantizar la reutilización y el desacoplamiento, el repositorio adopta un
 Las funciones deben comunicar su intención mediante prefijos semánticos, facilitando la auditoría técnica:
 
 1. **Exploración (`fetch_*`)**: Extraen metadata del sistema y la asignan al Namespace `KISA_`. Deben ser silenciosas (prohibido `stdout`).
-2. **Validación (`verify_*`)**: Pruebas de estado que retornan códigos de salida binarios (0/1).
-3. **Orquestación Segura (`safe_*`)**: *Wrappers* que ejecutan acciones mutantes (*reload/restart*) solo después de una validación de sintaxis exitosa. **Es el estándar obligatorio para cambios en servicios críticos.**
-4. **Interacción (`request_*` / `prompt_*`)**: Funciones capaces de solicitar datos al usuario si los parámetros requeridos están ausentes.
+2. **Resolución de Identidad (`resolve_*`)**: Resuelven valores críticos (identidad/configuración) priorizando variables de entorno y archivos `.env` sobre la interactividad.
+3. **Validación (`verify_*`)**: Pruebas de estado que retornan códigos de salida binarios (0/1).
+4. **Orquestación Segura (`safe_*`)**: *Wrappers* que ejecutan acciones mutantes (*reload/restart*) solo después de una validación de sintaxis exitosa. **Es el estándar obligatorio para cambios en servicios críticos.**
+5. **Interacción (`request_*` / `prompt_*`)**: Funciones capaces de solicitar datos al usuario si los parámetros requeridos están ausentes.
 
 ### 12.2 Principio de Autonomía Inteligente
 
@@ -324,6 +325,22 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../lib/sys-utils.sh"
 ```
 
+### 12.4 Jerarquía de Resolución de Configuración
+
+Para garantizar la compatibilidad con entornos CI/CD y ejecuciones manuales, los *scripts* deben resolver sus parámetros siguiendo estrictamente este orden:
+
+1. **Variables de Entorno (*Shell Export*):** Máxima prioridad para automatización externa.
+2. **Archivo de Configuración Local (`.env`):** Prioridad media para persistencia local de identidad.
+3. **Modo Interactivo (*Prompt*):** Último recurso, solo si existe una terminal activa.
+
 ## 13. Resiliencia y Prevención de *Downtime*
 
 Ningún *script* operativo podrá realizar cambios en la configuración de servicios críticos (*Nginx*, *Piler*, etc.) sin implementar el patrón de **Validación Pre-flight**. El uso de `safe_service_config_apply` o lógicas equivalentes de validación de sintaxis antes de un `reload` es mandatorio para garantizar la disponibilidad del servicio.
+
+### 13.1 Arquitectura de *Snippets*
+
+El endurecimiento de servicios debe realizarse mediante la creación de archivos fragmentados (*snippets*) y su vinculación controlada.
+
+- **Creación:** Los parámetros de seguridad se alojan en un archivo independiente.
+- **Vinculación:** Se utiliza la función `link_ssl_snippet` (o equivalente) para inyectar la directiva `include` en el archivo del servicio.
+- **Rollback:** Si la validación de sintaxis falla tras el vínculo, el *script* debe revertir la edición del archivo maestro inmediatamente.

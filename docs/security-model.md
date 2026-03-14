@@ -43,6 +43,9 @@ Esta línea base asume riesgos potenciales, incluyendo:
 - Debilitamiento de la gobernanza estructural
 - Introducción de secretos
 - Derivación de versiones inconsistente
+- **Fuga de Identidad/Secretos en `.env`**: Persistencia accidental de datos sensibles en archivos de configuración local no protegidos.
+- **Inyección de Configuración Maliciosa**: Alteración de la lógica de servicios mediante *snippets* de configuración no validados sintácticamente.
+- ***Downtime* por Configuración Huérfana**: Fallos en el servicio tras una recarga (*reload*) debido a inclusiones de archivos inexistentes o corruptos.
 
 La postura de seguridad busca mitigar estos riesgos estructuralmente.
 
@@ -134,6 +137,14 @@ La detección es insuficiente sin un protocolo de respuesta. En caso de que un s
 - **Revocación**: El secreto se considera comprometido y debe invalidarse en el origen inmediatamente.
 - **Saneamiento**: Se exige el uso de herramientas de reescritura de historial (`git filter-repo`) para eliminar la huella del secreto en todos los nodos del grafo de Git.
 - **Sincronización forzada**: La rama afectada debe ser sobrescrita en el remoto (`force-push`) tras el saneamiento, notificando a los interesados para resincronizar clones locales.
+
+#### 5.4.5 Seguridad de la Configuración Local (`.env`)
+
+El uso de archivos `.env` para la resolución de identidad introduce la necesidad de controles de acceso a nivel de sistema de archivos:
+
+- **Exclusión de Versiones**: El archivo `.env` DEBE estar incluido en `.gitignore` para evitar su persistencia en el historial de Git.
+- **Restricción de Permisos**: Se recomienda que los archivos `.env` en entornos productivos tengan permisos `600` (lectura/escritura exclusiva para el propietario).
+- **Sanitización de Entradas**: La función `resolve_identity_value` debe tratar los valores obtenidos como datos no confiables, aplicando limpiezas básicas de caracteres antes de su uso.
 
 ## 6. Consideraciones sobre la Cadena de Suministro
 
@@ -272,3 +283,23 @@ Para mitigar ejecuciones en entornos inconsistentes, los *scripts* operativos ap
 - **Protección de *Root***: Los *scripts* con capacidad de auditoría de seguridad exigen privilegios de superusuario (`EUID 0`) de forma explícita antes de acceder a datos sensibles.
 - **Determinismo de Rutas**: Cálculo de rutas relativas absolutas para evitar el secuestro de binarios (*Path Hijacking*).
 - **Manejo de TTY**: Detección inteligente de terminales para evitar la inyección de caracteres de escape en *logs* persistidos.
+
+## 15. Integridad de la Orquestación de Servicios
+
+La *suite* implementa seguridad activa durante la modificación de servicios críticos para prevenir ataques de denegación de servicio (DoS) por mala configuración.
+
+### 15.1 Validación Atómica y *Rollback*
+
+Cualquier función mutante (ej. `link_ssl_snippet`) opera bajo el principio de **Transaccionalidad Atómica**:
+
+1. **Inyección**: Se realiza el cambio en el archivo maestro.
+2. **Validación**: Se ejecuta un *test* de sintaxis del servicio (ej. `nginx -t`).
+3. **Compromiso o Reversión**: Si la validación falla, se ejecuta un *rollback* inmediato eliminando la línea inyectada antes de que el error afecte al proceso en ejecución.
+
+### 15.2 Aislamiento mediante *Snippets*
+
+Para reducir el radio de impacto, se prohíbe la edición directa de bloques lógicos complejos. El uso de ***Snippets*** permite:
+
+- Mantener los archivos originales del sistema limpios.
+- Facilitar auditorías rápidas de seguridad comparando solo los fragmentos inyectados.
+- Desvincular la identidad (certificados) de la lógica de la aplicación (*vhosts*).

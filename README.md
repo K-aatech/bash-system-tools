@@ -7,7 +7,7 @@
 [![Secret Scanning (TruffleHog)](https://github.com/K-aatech/bash-system-tools/actions/workflows/secret-scanning.yml/badge.svg)](https://github.com/K-aatech/bash-system-tools/actions/workflows/secret-scanning.yml)
 [![CodeQL](https://github.com/K-aatech/bash-system-tools/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/K-aatech/bash-system-tools/actions/workflows/github-code-scanning/codeql)
 
-[![Quality](https://img.shields.io/badge/quality-K'aatech%20Baseline%20v1.2.1-60c1ec)](./docs/governance-baseline.md)
+[![Quality](https://img.shields.io/badge/quality-K'aatech%20Baseline%20v1.3.0-60c1ec)](./docs/governance-baseline.md)
 ![Bash Version](https://img.shields.io/badge/bash-%3E%3D4.2-blue)
 ![License](https://img.shields.io/github/license/K-aatech/bash-system-tools)
 ![Stable Version](https://img.shields.io/github/v/release/K-aatech/bash-system-tools?exclude_prereleases&color=blue&label=stable)
@@ -22,6 +22,7 @@ A diferencia de *scripts* convencionales, estas herramientas están construidas 
 * **Seguridad por Diseño:** Fallo seguro (`set -euo pipefail`) y escaneo activo de secretos.
 * **Gobernanza:** Código auditado y validado mediante análisis estático automatizado.
 * **Portabilidad:** Dependencias mínimas y cumplimiento de estándares *POSIX/Bash*.
+* **Configuración Adaptativa:** Soporte nativo para inyección de variables vía entorno (ENV) y archivos `.env` para facilitar la integración en *pipelines* de CI/CD.
 
 ## 🚀 Inicio Rápido (Auditoría de Salud)
 
@@ -44,17 +45,27 @@ sudo ./audit/system-health-audit.sh
 * **Red:** Contexto local, conectividad y latencia *multi-cloud* (*"Fierro-to-Cloud"*).
 * **Virtualización:** Salud y estado de contenedores *Docker* (detección dinámica).
 
+### Hardening Automatizado (Mail Piler)
+
+Ahora puede automatizar el despliegue de seguridad definiendo su identidad previamente:
+
+```Bash
+# Definir identidad y ejecutar (Sin prompts)
+sudo PILER_FQDN="piler.dominio.com" PILER_ADMIN_EMAIL="admin@dominio.com" ./hardening/piler-hardening.sh
+```
+
 ## 🏗️ Estructura y Módulos
 
 El repositorio se organiza por dominios de responsabilidad, utilizando una **Arquitectura de Librerías Inteligentes** (`lib/`) que soportan ejecución programática e interactiva:
 
 * **`audit/`**: *Scripts* de inspección y diagnóstico. Generan reportes de estado sin alterar el sistema.
 * **`hardening/`**: Herramientas de reforzamiento de seguridad.
-  * **`piler-hardening.sh`**: **(v0.1.0)** Endurecimiento perimetral para Mail Piler. Implementa orquestación segura de TLS 1.3 y políticas HSTS. [Ver Manual de Operaciones](./docs/operations/piler-hardening-manual.md).
+  * **`piler-hardening.sh`**: **(v0.2.0)** Endurecimiento perimetral para Mail Piler. Implementa la nueva arquitectura de **SSL Snippets** y resolución automática de identidad. [Ver Manual de Operaciones](./docs/operations/piler-hardening-manual.md).
 * **`deploy/`**: *Scripts* destinados a la instalación y configuración inicial.
 * **`maintenance/`**: Automatización de tareas recurrentes (backups, limpieza, rotación).
 * **`lib/`**: El núcleo de inteligencia (KISA Framework).
-  * **Orquestación Segura (`safe_*`)**: Módulos que garantizan la integridad de los servicios (Nginx/Systemd) validando la sintaxis antes de aplicar cambios para prevenir *downtime*.
+  * **Identity Resolver**: Gestión inteligente de variables de configuración con jerarquía de prioridad (ENV > `.env` > Interactivo).
+  * **Orquestación Segura (`safe_*`)**: Módulos que garantizan la integridad de los servicios (Nginx/Systemd) validando la sintaxis antes de aplicar cambios para prevenir *downtime*. Ahora incluye `link_ssl_snippet` para vincular certificados a Vhosts de Nginx de forma no intrusiva con rollback automático.
   * **Autonomía Inteligente**: Funciones capaces de detectar si faltan parámetros y solicitarlos interactivamente solo si hay una terminal activa.
 
 ## 📚 Documentación y Gobernanza
@@ -88,6 +99,7 @@ Para nuestros clientes y socios, este repositorio sirve como evidencia de rigor 
 Este repositorio es una implementación de **Ingeniería de Sistemas en *Bash***:
 
 * **Namespace KISA:** Estandarización de atributos de infraestructura para evitar colisiones globales.
+* **Gestión de Identidad Centralizada:** Uso de `resolve_identity_value` para garantizar que los *scripts* operen con datos consistentes, ya sea en despliegues manuales o automatizados.
 * **Separación de Datos y Presentación:** Los módulos de descubrimiento (`fetch_`) están desacoplados de los módulos de reporte (`render_`), facilitando la futura integración con *Dashboards* o APIs.
 * **Resiliencia Operativa:**
   * Uso de `set -euo pipefail` e `IFS` seguro para evitar fallos silenciosos en entornos productivos.

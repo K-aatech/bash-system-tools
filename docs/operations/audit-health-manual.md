@@ -3,9 +3,9 @@
 ## Metadata
 
 - **Script Name:** system-health-audit.sh
-- **Version:** 0.1.0
+- **Version:** 0.1.1
 - **Author / Owner:** K'aatech Engineering Team
-- **Last Review Date:** 2026-03-09
+- **Last Review Date:** 2026-03-14
 - **Operational Classification:**
   - [x] Read-only
   - [x] Idempotent
@@ -32,7 +32,7 @@ Este *script* existe para garantizar que el nodo cumple con el **Governance Base
   1. *Bootstrap* e inyección de dependencias (`logging`, `sys-utils`, `net-utils`).
   2. Validación de privilegios de *Root* y binarios requeridos.
   3. Ejecución secuencial de sondas (Térmica, CPU, RAM, Disco, Zombis).
-  4. Auditoría de red y latencia *multi-cloud*.
+  4. Auditoría de red y latencia *multi-cloud* (vía `net-utils`).
   5. Generación de reporte final basado en niveles de *log* (`OK`, `WARN`, `CRIT`).
 
 Es **seguro ejecutarlo múltiples veces** (Idempotente) ya que no modifica el estado del sistema, salvo por la generación de *logs* y rotación de los mismos.
@@ -64,17 +64,29 @@ El script utiliza `verify_binary_existence` para validar las dependencias core a
 ## 5. Instalación y Uso
 
 ```bash
+## 5. Instalación y Uso
+
+El script permite la personalización de umbrales de alerta mediante la inyección de variables de entorno al momento de la ejecución. Si no se proveen, se utilizarán los valores por defecto definidos en la Sección 3.
+
+```bash
+# 1. Otorgar permisos de ejecución
 chmod +x audit/system-health-audit.sh
-# Ejecución estándar
+
+# 2. Ejecución estándar (Usa valores por defecto)
 sudo ./audit/system-health-audit.sh
-# Ejecución con umbrales personalizados
-THRESHOLD_RAM=95 sudo ./audit/system-health-audit.sh
+
+# 3. Ejecución con inyección de variables (Personalización de umbrales)
+# Ejemplo: Alerta de RAM al 95% y Disco al 85%
+sudo THRESHOLD_RAM=95 THRESHOLD_DISK=85 ./audit/system-health-audit.sh
+
+# 4. Ejecución con ruta de log personalizada
+sudo LOG_FILE="/var/log/kisa-audit.log" ./audit/system-health-audit.sh
 ```
 
 ## 6. Seguridad y Riesgos
 
 - **¿Requiere *root*?** Sí, para acceder a métricas de *hardware* y *sockets* protegidos.
-- **¿Modifica archivos?** No, solo lectura y escritura de su propio *log*.
+- **¿Modifica archivos?** No, solo lectura y escritura de su propio *log*  (*Audit-only*).
 - **¿Interactúa con red?** Sí, realiza *pings* a *endpoints* de *Cloud* (AWS, GCP, Azure) para medir latencia.
 
 ## 7. Manejo de Errores
@@ -103,4 +115,5 @@ Al ser un *script* de lectura, el fallo solo implica la ausencia de datos. Si el
 
 ## 11. Historial de Cambios Relevantes
 
+- **v0.1.1 (2026-03-14):** Revisión a instrucciones de Instalación y Uso.
 - **v0.1.0 (2026-03-09):** Refactorización completa para alineación con Suite v1.2.1. Integración de `logging.sh`, `sys-utils.sh` y `net-utils.sh`. Adopción de estándar de documentación Shdoc.

@@ -12,9 +12,10 @@
     - [`audit_baseline_permissions`](#audit_baseline_permissions)
     - [`verify_path_owner_mode`](#verify_path_owner_mode)
     - [`audit_container_health`](#audit_container_health)
-  - [🖥️ Dominio: Interfaz y Usuario](#️-dominio-interfaz-y-usuario)
+  - [🖥️ Dominio: Interfaz, Usuario y Gestión de Contexto](#️-dominio-interfaz-usuario-y-gestión-de-contexto)
     - [`print_section`](#print_section)
     - [`request_input`](#request_input)
+    - [`resolve_identity_value`](#resolve_identity_value)
   - [📊 Dominio: Descubrimiento de datos](#-dominio-descubrimiento-de-datos)
     - [`fetch_host_metadata`](#fetch_host_metadata)
 
@@ -160,9 +161,9 @@ verify_path_owner_mode "/etc/shadow" "600"
 audit_container_health
 ```
 
-## 🖥️ Dominio: Interfaz y Usuario
+## 🖥️ Dominio: Interfaz, Usuario y Gestión de Contexto
 
-Estandarización de la interfaz de línea de comandos y métodos de captura de datos para el usuario.
+Estandarización de la interfaz de línea de comandos, métodos de captura de datos y resolución de variables de entorno/configuración.
 
 ### `print_section`
 
@@ -194,6 +195,27 @@ print_section "Ejecutando diagnóstico de contenedores"
 
 ```Bash
 request_input "DB_PASSWORD" "Ingrese contraseña de DB" 1
+```
+
+### `resolve_identity_value`
+
+**Nivel de riesgo:** Bajo (Lógico)
+
+| **Atributo**         | **Detalles**                                                                                                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Propósito**        | Resolver valores de identidad/configuración siguiendo una jerarquía de prioridad: 1. Variables de Entorno, 2. Archivo `.env`, 3. Prompt interactivo.                         |
+| **Parámetros**       | `$1`: Nombre var. retorno, `$2`: Nombre var. entorno/etiqueta, `$3`: Mensaje prompt, `$4`: Ruta a archivo `.env` (opcional).                                                 |
+| **Dependencias**     | Comando `grep`, `cut`, `tr` y función `request_input`.                                                                                                                       |
+| **Salida/Efecto**    | Asigna el valor resuelto a la variable local del script llamador mediante referencia indirecta. Aborta con `exit 1` en sesiones no interactivas si el valor no se encuentra. |
+| **Estado de salida** | `0`: Éxito, `1`: Error de resolución en modo no interactivo.                                                                                                                 |
+
+**Example:**
+
+```bash
+# Intenta obtener PILER_FQDN del sistema, del archivo .env o pregunta al usuario
+resolve_identity_value fqdn "PILER_FQDN" "Enter FQDN for Piler" "./.env"
+
+echo "Resolved FQDN: ${fqdn}"
 ```
 
 ## 📊 Dominio: Descubrimiento de datos

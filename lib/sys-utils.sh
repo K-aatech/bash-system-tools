@@ -265,7 +265,7 @@ audit_container_health() {
 }
 
 # ======================================================================
-# --- PUBLIC API: UI & INTERACTION ---
+# --- PUBLIC API: INTERFACE, USER AND CONTEXT MANAGEMENT ---
 # ======================================================================
 
 # @description Prints a standardized visual section header.
