@@ -357,3 +357,41 @@ safe_service_config_apply() {
     return 1
   fi
 }
+
+# @description Links an SSL snippet to an Nginx Vhost safely.
+# @param $1 vhost_path   Path to the Nginx site configuration.
+# @param $2 snippet_path Path to the SSL snippet to include.
+link_ssl_snippet() {
+  local vhost="${1}"
+  local snippet="${2}"
+
+  [[ ! -f "$vhost" ]] && {
+    log_event "CRIT" "Vhost file not found: $vhost"
+    return 1
+  }
+
+  # 1. Check if the include already exists to avoid duplicates
+  if grep -q "include $snippet;" "$vhost"; then
+    log_event "INFO" "Snippet already linked in $vhost. Skipping."
+    return 0
+  fi
+
+  # 2. Inject the include (usually after 'listen 443 ssl')
+  # As a security measure, we add it before the last closing brace
+  log_event "INFO" "Linking SSL snippet to $vhost..."
+  if ! sed -i "\|server_name|a \    include $snippet;" "$vhost"; then
+    log_event "CRIT" "Failed to edit vhost file."
+    return 1
+  fi
+
+  # 3. Validate syntax immediately
+  if nginx -t > /dev/null 2>&1; then
+    log_event "OK" "Snippet linked and Nginx syntax verified."
+    return 0
+  else
+    log_event "CRIT" "Nginx syntax error detected. Rolling back changes..."
+    # Rollback using alternate delimiter to avoid conflicts with /
+    sed -i "\|include $snippet;|d" "$vhost"
+    return 1
+  fi
+}

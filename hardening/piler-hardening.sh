@@ -88,8 +88,9 @@ apply_network_security() {
   local ssl_snippet="/etc/nginx/snippets/piler-ssl.conf"
   local cert_manual="/etc/piler/ssl/piler.crt"
   local key_manual="/etc/piler/ssl/piler.key"
+  local piler_vhost="/etc/nginx/sites-available/piler.conf"
 
-  # 3. Delegation to net-utils.sh
+  # 3. TLS Configuration (Certbot/Manual + Snippet Generation, delegated to net-utils.sh
   # The last 3 empty parameters activate the library's interactive menu (Certbot vs. Manual)
   if ! configure_tls_edge \
     "$fqdn" \
@@ -104,10 +105,17 @@ apply_network_security() {
     exit 1
   fi
 
-  # 2. Nginx Configuration (Headers and Protocols, defined in net-utils/sys-utils)
+  # 4. Global Hardening (Ciphers, HSTS, etc. en /etc/nginx/conf.d/, defined in net-utils/sys-utils)
   apply_nginx_hardening
 
-  log_event "OK" "Network security and TLS stack configured successfully."
+  # 5. Linking the Snippet to the Vhost (WITHOUT RELOAD)
+  # This new function (link_ssl_snippet) only edits the .conf file.
+  if ! link_ssl_snippet "$piler_vhost" "$ssl_snippet"; then
+    log_event "CRIT" "Failed to link SSL snippet to Vhost."
+    exit 1
+  fi
+
+  log_event "OK" "Network security stack prepared. Waiting for final verification."
 }
 
 # @description Validates the final state of the hardening process.
