@@ -70,16 +70,38 @@ run_preflight_checks() {
   verify_service_status "nginx"
 }
 
-# @description Orchestrates network security and delegates TLS lifecycle to net-utils.
-# @no-params
+# @description Orchestrates network security, captures identity, and delegates TLS.
 # @return 0 on success, 1 on TLS failure.
 apply_network_security() {
   print_section "Edge Security & TLS"
 
-  # 1. TLS/SSL Management (delegated to lib/net-utils.sh)
-  if ! configure_tls_edge; then
-    log_event "CRIT" "Network security phase failed during TLS configuration."
-    return 1
+  # If the variables already exist (e.g., export FQDN="..."), they are retained.
+  local fqdn="${FQDN:-}"
+  local admin_email="${ADMIN_EMAIL:-}"
+  local env_path="${SCRIPT_DIR}/../.env"
+
+  # 1. Identity Resolution (lib/sys-utils.sh)
+  resolve_identity_value fqdn "PILER_FQDN" "Enter FQDN for Piler" "${env_path}" || exit 1
+  resolve_identity_value admin_email "PILER_ADMIN_EMAIL" "Enter admin email" "${env_path}" || exit 1
+
+  # 2. Defining routes (Application-specific)
+  local ssl_snippet="/etc/nginx/snippets/piler-ssl.conf"
+  local cert_manual="/etc/piler/ssl/piler.crt"
+  local key_manual="/etc/piler/ssl/piler.key"
+
+  # 3. Delegation to net-utils.sh
+  # The last 3 empty parameters activate the library's interactive menu (Certbot vs. Manual)
+  if ! configure_tls_edge \
+    "$fqdn" \
+    "$admin_email" \
+    "$ssl_snippet" \
+    "$cert_manual" \
+    "$key_manual" \
+    "" "" ""; then
+
+    log_event "CRIT" "TLS setup phase failed or requires manual intervention."
+    log_event "INFO" "Hardening process suspended to maintain Nginx stability."
+    exit 1
   fi
 
   # 2. Nginx Configuration (Headers and Protocols, defined in net-utils/sys-utils)
