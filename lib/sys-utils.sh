@@ -9,7 +9,10 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+# ======================================================================
 # --- ENVIRONMENT GUARD ---
+# ======================================================================
+
 if [[ -z "${BASH_VERSINFO:-}" || "${BASH_VERSINFO[0]}" -lt 4 ]]; then
   printf "[CRIT] This library requires Bash >= 4.x\n" >&2
   exit 1
@@ -30,7 +33,9 @@ if ! command -v log_event > /dev/null 2>&1; then
   }
 fi
 
+# ======================================================================
 # --- CONSTANTS ---
+# ======================================================================
 
 # @description Recommended permissions matrix for a secure baseline. (Security by Design)
 # Format: "path:expected_mode"
@@ -43,7 +48,9 @@ readonly KISA_PATH_POLICY=(
   "/etc/ssh/sshd_config:600"
 )
 
+# ======================================================================
 # --- INTERNAL HELPERS ---
+# ======================================================================
 
 # @description Detects the system package manager.
 # @return stdout String representing the package manager (apt-get, dnf, pacman, apk, unknown).
@@ -67,7 +74,9 @@ _get_package_manager() {
   fi
 }
 
+# ======================================================================
 # --- PUBLIC API: SYSTEM INTEGRITY ---
+# ======================================================================
 
 # @description Ensures the script is running with root privileges.
 # @exit 1 If the user is not root.
@@ -169,7 +178,9 @@ install_missing_dependencies() {
   fi
 }
 
+# ======================================================================
 # --- PUBLIC API: SECURITY AUDIT ---
+# ======================================================================
 
 # @description Performs a full audit based on the KISA_PATH_POLICY.
 # @return int Number of issues found.
@@ -253,7 +264,9 @@ audit_container_health() {
   fi
 }
 
+# ======================================================================
 # --- PUBLIC API: UI & INTERACTION ---
+# ======================================================================
 
 # @description Prints a standardized visual section header.
 # @param $1 The title of the section.
@@ -290,7 +303,46 @@ request_input() {
   fi
 }
 
+# @description Resolves identity values with a tiered priority (ENV > .env > Prompt).
+# @details Implements "Identity Resolver" pattern to support automation and interactivity.
+# @param $1 __result_var  Name of the local variable in the caller script to store the result.
+# @param $2 env_var_name  Key to search for (e.g., PILER_FQDN).
+# @param $3 prompt_msg    Message to display if manual input is required.
+# @param $4 env_file      Path to the .env file (Optional, defaults to .env).
+# @return 0 on success, 1 on failure.
+resolve_identity_value() {
+  local __result_var=$1
+  local env_var_name=$2
+  local prompt_msg=$3
+  local env_file="${4:-.env}"
+  local value=""
+
+  # 1. Check direct Environment Variable
+  value="${!env_var_name:-}"
+
+  # 2. Check .env file if value is still empty
+  if [[ -z "${value}" && -f "${env_file}" ]]; then
+    # Captura el valor del archivo .env de forma segura
+    value=$(grep -E "^${env_var_name}=" "${env_file}" | cut -d'=' -f2- | tr -d '"' | tr -d "'" || echo "")
+  fi
+
+  # 3. Prompt as last resort
+  if [[ -z "${value}" ]]; then
+    if [[ -t 0 ]]; then
+      # Usamos la función existente de sys-utils.sh
+      request_input value "${prompt_msg}" 0
+    else
+      log_event "CRIT" "Identity Error: ${env_var_name} not found in ENV, ${env_file} or interactive shell."
+      return 1
+    fi
+  fi
+
+  eval "${__result_var}='${value}'"
+}
+
+# ======================================================================
 # --- PUBLIC API: DATA DISCOVERY ---
+# ======================================================================
 
 # @description Exports system metadata into global KISA_ variables.
 # @stdout Variables KISA_HOSTNAME, KISA_UPTIME, KISA_KERNEL, KISA_DISTRO, KISA_ARCH.
