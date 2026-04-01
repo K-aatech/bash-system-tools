@@ -12,7 +12,7 @@ IFS=$'\n\t'
 
 # --- Environment & Globals ---
 # x-release-please-start-version
-SUITE_VERSION="0.1.0"
+SUITE_VERSION="0.3.0"
 # x-release-please-end-version
 readonly SUITE_VERSION
 
